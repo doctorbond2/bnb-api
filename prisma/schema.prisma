@@ -24,21 +24,19 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   admin     Boolean  @default(false)
-
-  // A user can have multiple bookings
-  bookings  Booking[]  // One-to-many relationship
+  bookings  Booking[]  
 }
 
 model Property {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   name            String
-  country         String   // Removed unique constraint here
+  country         String 
   city            String
   price_per_night Int
-  available       Boolean
-
-  // A property can have multiple bookings
-  bookings  Booking[]  // One-to-many relationship
+  availableFrom   DateTime? 
+  availableUntil  DateTime? 
+  available       Boolean @default(true)
+  bookings  Booking[]  
 }
 
 model Booking {
@@ -48,5 +46,7 @@ model Booking {
   userId     String   @db.ObjectId
   property   Property @relation(fields: [propertyId], references: [id])
   propertyId String   @db.ObjectId
+  startDate DateTime
+  endDate DateTime
   createdAt  DateTime @default(now())
 }

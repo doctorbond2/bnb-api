@@ -52,6 +52,8 @@ export interface ValidationErrors extends ValidationMessages {
   admin?: string;
   key?: string;
   body?: string;
+  country?: string;
+  city?: string;
 }
 export interface Token {
   username: string;

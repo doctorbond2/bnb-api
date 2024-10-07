@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { Property } from '../types/Property';
 class PrismaKit {
   contructor() {}
 
@@ -19,6 +20,11 @@ class PrismaKit {
       },
     });
     return user ? false : true;
+  };
+  static createProperty = async (data: Property) => {
+    await prisma.property.create({
+      data,
+    });
   };
 }
 export default PrismaKit;
