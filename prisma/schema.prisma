@@ -13,61 +13,40 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Todo {
-  id        String  @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  completed Boolean @default(false)
-}
-
-model Product {
-  id          String @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  description String
-  price       Float
-}
 
 model User {
-  id            String                    @id @default(auto()) @map("_id") @db.ObjectId
-  username      String                    @unique
-  email         String                    @unique
-  firstName     String
-  lastName      String
-  password      String
-  createdAt     DateTime                  @default(now())
-  updatedAt     DateTime                  @updatedAt
-  conversations ConversationParticipant[]
-  messages      Message[]
-  admin         Boolean                   @default(false)
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  username  String   @unique
+  email     String   @unique
+  firstName String
+  lastName  String
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  admin     Boolean  @default(false)
+
+  // A user can have multiple bookings
+  bookings  Booking[]  // One-to-many relationship
 }
 
-model Conversation {
-  id           String                    @id @default(auto()) @map("_id") @db.ObjectId
-  participants ConversationParticipant[]
-  messages     Message[]                 @relation("ConversationMessages")
-  active       Boolean
-  createdAt    DateTime                  @default(now())
-  updatedAt    DateTime                  @updatedAt
+model Property {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  country         String   // Removed unique constraint here
+  city            String
+  price_per_night Int
+  available       Boolean
+
+  // A property can have multiple bookings
+  bookings  Booking[]  // One-to-many relationship
 }
 
-model Message {
-  id             String       @id @default(auto()) @map("_id") @db.ObjectId
-  textContent    String       @default("I am a message")
-  sentBy         User         @relation(fields: [sentById], references: [id])
-  sentById       String       @db.ObjectId
-  conversation   Conversation @relation("ConversationMessages", fields: [conversationId], references: [id])
-  conversationId String       @db.ObjectId
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-}
-
-model ConversationParticipant {
-  id             String       @id @default(auto()) @map("_id") @db.ObjectId
-  user           User         @relation(fields: [userId], references: [id])
-  userId         String       @db.ObjectId
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
-  conversationId String       @db.ObjectId
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @default(now())
-
-  @@unique([userId, conversationId])
+model Booking {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  customer   Json
+  created_by User     @relation(fields: [userId], references: [id])
+  userId     String   @db.ObjectId
+  property   Property @relation(fields: [propertyId], references: [id])
+  propertyId String   @db.ObjectId
+  createdAt  DateTime @default(now())
 }
