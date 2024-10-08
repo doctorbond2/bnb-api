@@ -3,12 +3,22 @@ import {
   StatusCodes as Codes,
   StatusMessages as Messages,
 } from '@/models/enums/statusCodes';
+import { ValidationErrors } from '../types/Auth';
 
-type GetError = (statusCode: Codes, message?: string) => Response;
-const createError = (statusCode: Codes, message?: string): Response => {
+type GetError = (
+  statusCode: Codes,
+  message?: string,
+  errors?: ValidationErrors
+) => Response;
+const createError = (
+  statusCode: Codes,
+  message?: string,
+  errors?: ValidationErrors
+): Response => {
   return NextResponse.json({
     message: message || Messages[statusCode],
     status: statusCode,
+    errors: errors || {},
   });
 };
 const returnError: GetError = createError;
@@ -29,6 +39,8 @@ class ResponseError {
     forbidden: (message: string) => returnError(Codes.FORBIDDEN, message),
     internalServerError: (message: string) =>
       returnError(Codes.INTERNAL_SERVER_ERROR, message),
+    badRequest_validationError: (errors: ValidationErrors) =>
+      returnError(Codes.BAD_REQUEST, undefined, errors),
   };
 }
 

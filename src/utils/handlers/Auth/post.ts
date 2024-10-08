@@ -9,7 +9,7 @@ import {
   generateRefreshToken,
   generateToken,
   verifyRefreshToken,
-  veryifyRegisterInformation,
+  verifyRegisterInformation,
 } from '@/utils/helpers/auth';
 import { User } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
@@ -17,11 +17,12 @@ export const LoginUser = async (req: NextRequest): Promise<Response> => {
   const body: User = await req.json();
   const [hasErrors, errors] = validateLoginBody(body);
   if (hasErrors) {
-    return NextResponse.json(errors, { status: 400 });
+    return errors;
   }
+
   try {
     const user: User | null = await prisma.user.findUnique({
-      where: { username: body.username },
+      where: { username: body.username.toLowerCase() },
     });
     if (!user) {
       return ResponseError.custom.notFound(M.USER_NOT_FOUND);
@@ -61,21 +62,20 @@ export const registerUser = async (req: NextRequest): Promise<Response> => {
   if (!body) {
     return ResponseError.default.badRequest();
   }
-  const errors = await veryifyRegisterInformation(body);
-  if (errors.length > 0) {
-    const errMessage = errors.join(', ');
-    return ResponseError.custom.badRequest(errMessage);
+  const [hasErrors, errors] = await verifyRegisterInformation(body);
+  if (hasErrors) {
+    return errors;
   }
   const hashedPassword = await hashPassword(body.password);
   try {
     const user = await prisma.user.create({
       data: {
-        email: body.email,
-        username: body.username,
+        email: body.email.toLowerCase(),
+        username: body.username.toLowerCase(),
         password: hashedPassword,
-        firstName: body.firstName,
-        lastName: body.lastName,
-        admin: body.admin ? true : false,
+        firstName: body.firstName.toLowerCase(),
+        lastName: body.lastName.toLowerCase(),
+        admin: !!body.admin,
       },
     });
     const token = await generateToken(user);
@@ -86,7 +86,7 @@ export const registerUser = async (req: NextRequest): Promise<Response> => {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      admin: user.admin ? true : false,
+      admin: !!user.admin,
     };
     return NextResponse.json({
       data: {

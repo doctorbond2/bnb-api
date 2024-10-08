@@ -1,4 +1,11 @@
 export const ValidationMessages = {
+  NO_BODY: 'No body provided.',
+  FIRSTNAME_REQUIRED: 'No firstname provided.',
+  NAME_REQUIRIED: 'No name provided.',
+  LASTNAME_REQUIRED: 'No lastname provided.',
+  COUNTRY_REQUIRED: 'No country provided.',
+  CITY_REQUIRED: 'No city provided.',
+  PRICE_PER_NIGHT_REQUIRED: 'No price provided.',
   USERNAME_REQUIRED: 'Username is required.',
   USERNAME_TOO_SHORT: 'Username must be at least 4 characters long.',
   USER_NOT_FOUND: 'User not found.',

@@ -24,7 +24,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   admin     Boolean  @default(false)
-  bookings  Booking[]  
+  bookings  Booking[]
+  hosted_properties Property[]
 }
 
 model Property {
@@ -36,6 +37,8 @@ model Property {
   availableFrom   DateTime? 
   availableUntil  DateTime? 
   available       Boolean @default(true)
+  host User     @relation(fields: [hostId], references: [id])
+  hostId String @db.ObjectId
   bookings  Booking[]  
 }
 
@@ -46,6 +49,7 @@ model Booking {
   userId     String   @db.ObjectId
   property   Property @relation(fields: [propertyId], references: [id])
   propertyId String   @db.ObjectId
+  confirmationCode String? @unique
   startDate DateTime
   endDate DateTime
   createdAt  DateTime @default(now())

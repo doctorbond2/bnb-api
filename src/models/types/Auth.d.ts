@@ -53,7 +53,9 @@ export interface ValidationErrors extends ValidationMessages {
   key?: string;
   body?: string;
   country?: string;
+  name?: string;
   city?: string;
+  price_per_night?: string;
 }
 export interface Token {
   username: string;

@@ -23,7 +23,7 @@ export const middleware_authenticate_request = async (
 ): Promise<[boolean, ValidationErrors, string | null]> => {
   const errors: ValidationErrors = {};
   const userId = await verifyToken(request);
-  console.log('tokenId', userId);
+
   const key = validateApiKey(request);
   if (!userId) {
     errors.token = M.INVALID_TOKEN;

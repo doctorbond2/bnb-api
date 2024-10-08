@@ -7,8 +7,16 @@ export async function handler_createNewProperty(
   req: NextRequest
 ): Promise<Response> {
   const body: Property = await req.json();
+  const [hasErrors, errors] = await validateIncomingData(body);
+  if (hasErrors) {
+    return errors;
+  }
+  const userId = req.cookies.get('userId')?.value;
+  if (!userId) {
+    return ResponseError.custom.unauthorized('User not authorized');
+  }
   try {
-    await PrismaKit.createProperty(body);
+    await PrismaKit.property.createProperty(body, userId);
     return NextResponse.json({ status: 204 });
   } catch (error) {
     console.log('Error creating property: ', error);

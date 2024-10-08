@@ -2,7 +2,7 @@ import * as jose from 'jose';
 import { RegisterInformation, ValidationErrors } from '@/models/types/Auth';
 import ResponseError from '@/models/classes/responseError';
 import { ValidationMessages } from '@/models/enums/errorMessages';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { UpdateProfileInformation } from '@/models/types/Auth';
 
 import { LoginInformation } from '@/models/types/Auth';
@@ -13,6 +13,7 @@ export const generateToken = async (
   payload: jose.JWTPayload
 ): Promise<string> => {
   const secret = new TextEncoder().encode(SECRET_KEY);
+  console.log('Encoded Secret:', secret);
 
   const token = await new jose.SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
@@ -48,7 +49,9 @@ export const verifyToken = async (req: NextRequest): Promise<string | null> => {
   try {
     const secret = new TextEncoder().encode(SECRET_KEY);
 
-    const { payload } = await jose.jwtVerify(token, secret);
+    const { payload } = await jose.jwtVerify(token, secret, {
+      algorithms: ['HS256'],
+    });
 
     if (typeof payload !== 'object' || !payload.id) {
       return null;
@@ -56,7 +59,11 @@ export const verifyToken = async (req: NextRequest): Promise<string | null> => {
 
     return payload.id as string;
   } catch (err) {
-    console.log(err);
+    if (err instanceof jose.errors.JWTExpired) {
+      console.log('Token has expired:', err);
+    } else {
+      console.log('JWT verification error:', err);
+    }
     return null;
   }
 };
@@ -82,50 +89,64 @@ export const verifyRefreshToken = async (
     return null;
   }
 };
-export const veryifyRegisterInformation = async ({
-  username,
-  lastName,
-  firstName,
-  password,
-  email,
-}: RegisterInformation): Promise<string[]> => {
-  const {
-    USERNAME_REQUIRED,
-    USERNAME_TOO_SHORT,
-    LAST_NAME_REQUIRED,
-    FIRST_NAME_REQUIRED,
-    PASSWORD_REQUIRED,
-    EMAIL_REQUIRED,
-    INVALID_USERNAME_NOT_AVAILABLE,
-    INVALID_EMAIL_NOT_AVAILABLE,
-  } = ValidationMessages;
-  const errors: string[] = [];
-  if (!username) {
-    errors.push(USERNAME_REQUIRED);
-  } else if (username.length < 4) {
-    errors.push(USERNAME_TOO_SHORT);
+
+export const verifyRegisterInformation = async (
+  body: RegisterInformation
+): Promise<[boolean, Response]> => {
+  const errors: ValidationErrors = {};
+
+  if (!body.username) {
+    errors.username = ValidationMessages.USERNAME_REQUIRED;
+  } else if (body.username.length < 4) {
+    errors.username = ValidationMessages.USERNAME_TOO_SHORT;
   }
-  if (!lastName) {
-    errors.push(LAST_NAME_REQUIRED);
+
+  if (!body.lastName) {
+    errors.lastName = ValidationMessages.LAST_NAME_REQUIRED;
   }
-  if (!firstName) {
-    errors.push(FIRST_NAME_REQUIRED);
+
+  if (!body.firstName) {
+    errors.firstName = ValidationMessages.FIRST_NAME_REQUIRED;
   }
-  if (!password) {
-    errors.push(PASSWORD_REQUIRED);
+
+  if (!body.password) {
+    errors.password = ValidationMessages.PASSWORD_REQUIRED;
   }
-  if (!email) {
-    errors.push(EMAIL_REQUIRED);
+
+  if (!body.email) {
+    errors.email = ValidationMessages.EMAIL_REQUIRED;
   }
-  const usernameAvailable = await PrismaKit.checkUsernameAvailability(username);
-  if (!usernameAvailable) {
-    errors.push(INVALID_USERNAME_NOT_AVAILABLE);
+
+  if (body.username) {
+    try {
+      const usernameAvailable = await PrismaKit.user.checkUsernameAvailability(
+        body.username
+      );
+      if (!usernameAvailable) {
+        errors.username = ValidationMessages.INVALID_USERNAME_NOT_AVAILABLE;
+      }
+    } catch {
+      return [true, ResponseError.default.internalServerError()];
+    }
   }
-  const emailAvailable = await PrismaKit.checkEmailAvailability(email);
-  if (!emailAvailable) {
-    errors.push(INVALID_EMAIL_NOT_AVAILABLE);
+
+  if (body.email) {
+    try {
+      const emailAvailable = await PrismaKit.user.checkEmailAvailability(
+        body.email
+      );
+      if (!emailAvailable) {
+        errors.email = ValidationMessages.INVALID_EMAIL_NOT_AVAILABLE;
+      }
+    } catch {
+      return [true, ResponseError.default.internalServerError()];
+    }
   }
-  return errors;
+
+  return [
+    Object.keys(errors).length > 0,
+    ResponseError.custom.badRequest_validationError(errors),
+  ];
 };
 export const validateApiKey = (req: NextRequest) => {
   const validApiKey = process.env.API_KEY || '';
@@ -138,7 +159,9 @@ export const validateApiKey = (req: NextRequest) => {
   }
   return true;
 };
-export const validateLoginBody = (body: LoginInformation) => {
+export const validateLoginBody = (
+  body: LoginInformation
+): [boolean, Response] => {
   const errors: ValidationErrors = {};
 
   if (body.email === '' || body.password === '') {
@@ -148,7 +171,10 @@ export const validateLoginBody = (body: LoginInformation) => {
     errors.password_or_username =
       ValidationMessages.INVALID_PASSWORD_OR_USERNAME;
   }
-  return [Object.keys(errors).length > 0, errors];
+  return [
+    Object.keys(errors).length > 0,
+    ResponseError.custom.badRequest_validationError(errors),
+  ];
 };
 export const validateUpdateProfileBody = async (
   body: UpdateProfileInformation
@@ -165,23 +191,35 @@ export const validateUpdateProfileBody = async (
   }
   try {
     if (body.username) {
-      const available = PrismaKit.checkUsernameAvailability(body.username);
+      const available = await PrismaKit.user.checkUsernameAvailability(
+        body.username
+      );
       if (!available) {
         errors.username = ValidationMessages.INVALID_USERNAME_NOT_AVAILABLE;
       }
     }
-
+  } catch (err) {
+    return [
+      true,
+      ResponseError.custom.internalServerError((err as Error).message),
+    ];
+  }
+  try {
     if (body.email) {
-      const available = PrismaKit.checkEmailAvailability(body.email);
+      const available = await PrismaKit.user.checkEmailAvailability(body.email);
       if (!available) {
         errors.email = ValidationMessages.INVALID_EMAIL_NOT_AVAILABLE;
       }
     }
-  } catch {
-    return [true, ResponseError.default.internalServerError()];
+  } catch (err) {
+    return [
+      true,
+      ResponseError.custom.internalServerError((err as Error).message),
+    ];
   }
+
   return [
     Object.keys(errors).length > 0,
-    NextResponse.json({ errors }, { status: 400 }),
+    ResponseError.custom.badRequest_validationError(errors),
   ];
 };
