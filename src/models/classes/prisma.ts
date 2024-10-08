@@ -6,6 +6,17 @@ class PrismaKit {
 
   static property = {
     createProperty: async (data: Property, hostId: string) => {
+      if (
+        !data.availableFrom ||
+        !data.availableUntil ||
+        data.availableFrom > data.availableUntil
+      ) {
+        data.available = false;
+      }
+      const isUser = await this.user.checkId(hostId);
+      if (!isUser) {
+        throw new Error('User not found');
+      }
       await prisma.property.create({
         data: {
           ...data,

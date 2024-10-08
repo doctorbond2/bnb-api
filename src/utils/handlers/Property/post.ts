@@ -11,10 +11,12 @@ export async function handler_createNewProperty(
   if (hasErrors) {
     return errors;
   }
+  //Tar emot userId från cookies för att signera property med rätt värds id//
   const userId = req.cookies.get('userId')?.value;
   if (!userId) {
     return ResponseError.custom.unauthorized('User not authorized');
   }
+
   try {
     await PrismaKit.property.createProperty(body, userId);
     return NextResponse.json({ status: 204 });
