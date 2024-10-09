@@ -1,8 +1,6 @@
 import { NextRequest } from 'next/server';
-import { handler_createNewProperty as createProperty } from '@/utils/handlers/Property/post';
-export async function POST(req: NextRequest): Promise<Response> {
-  return await createProperty(req);
-}
-export async function GET(req: NextRequest): Promise<Response> {
-  return await createProperty(req);
+
+import { handler_GetPropertyList as getPropertyList } from '@/utils/handlers/Property/get';
+export async function GET(req: NextRequest) {
+  return await getPropertyList(req);
 }

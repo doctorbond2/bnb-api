@@ -4,6 +4,8 @@ import { ErrorMessages } from '../enums/errorMessages';
 import { Booking } from '../types/Booking';
 import { RegisterInformation } from '../types/Auth';
 import { get } from 'http';
+
+//IMPLEEMETERA DELETE USER BRÄH
 class PrismaKit {
   contructor() {}
 
@@ -88,7 +90,7 @@ class PrismaKit {
     delete: async (propertyId: string, userId: string, isAdmin?: boolean) => {
       try {
         if (isAdmin) {
-          await this.property.admin_delete(propertyId);
+          await this.admin.delete_property(propertyId);
           return;
         }
         const propertyBookings = await this.booking.getAllPropertyBookings(
@@ -114,17 +116,6 @@ class PrismaKit {
       } catch (error) {
         throw error;
       }
-    },
-
-    admin_delete: async (propertyId: string) => {
-      await prisma.property.delete({
-        where: {
-          id: propertyId,
-        },
-      });
-      await prisma.booking.deleteMany({
-        where: { propertyId },
-      });
     },
   };
 
@@ -205,7 +196,7 @@ class PrismaKit {
     delete: async (bookingId: string, userId: string, isAdmin?: boolean) => {
       try {
         if (isAdmin) {
-          await this.booking.admin_delete(bookingId);
+          await this.admin.delete_booking(bookingId);
         }
         await prisma.booking.delete({
           where: {
@@ -217,15 +208,51 @@ class PrismaKit {
         throw error;
       }
     },
-    admin_delete: async (bookingId: string) => {
+
+    getAllPropertyBookings: async (propertyId: string) => {
+      return await prisma.booking.findMany({ where: { propertyId } });
+    },
+  };
+  static admin = {
+    delete_property: async (propertyId: string) => {
+      await prisma.property.delete({
+        where: {
+          id: propertyId,
+        },
+      });
+      await prisma.booking.deleteMany({
+        where: { propertyId },
+      });
+    },
+    delete_booking: async (bookingId: string) => {
       await prisma.booking.delete({
         where: {
           id: bookingId,
         },
       });
     },
-    getAllPropertyBookings: async (propertyId: string) => {
-      return await prisma.booking.findMany({ where: { propertyId } });
+    getAllProperties: async (pageQuery: { page: number; pageSize: number }) => {
+      const { page, pageSize } = pageQuery;
+      const skip = (page - 1) * pageSize;
+      const take = pageSize;
+      return await prisma.property.findMany({ skip, take });
+    },
+    getAllHosts: async (pageQuery: { page: number; pageSize: number }) => {
+      const { page, pageSize } = pageQuery;
+      const skip = (page - 1) * pageSize;
+      const take = pageSize;
+      return await prisma.user.findMany({
+        skip,
+        take,
+        where: {
+          hosted_properties: {
+            some: {},
+          },
+        },
+        include: {
+          hosted_properties: true,
+        },
+      });
     },
   };
 }
