@@ -4,6 +4,7 @@ import ResponseError from '@/models/classes/responseError';
 import { ValidationMessages } from '@/models/enums/errorMessages';
 import { NextRequest } from 'next/server';
 import { UpdateProfileInformation } from '@/models/types/Auth';
+import { TokenPayload } from '@/models/types/Auth';
 
 import { LoginInformation } from '@/models/types/Auth';
 import PrismaKit from '@/models/classes/prisma';
@@ -15,7 +16,12 @@ export const generateToken = async (
   const secret = new TextEncoder().encode(SECRET_KEY);
   console.log('Encoded Secret:', secret);
 
-  const token = await new jose.SignJWT(payload)
+  const token = await new jose.SignJWT({
+    id: payload.id,
+    username: payload.username,
+    email: payload.email,
+    admin: payload.admin,
+  })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('1h')
@@ -29,7 +35,12 @@ export const generateRefreshToken = async (
 ): Promise<string> => {
   const refreshSecret = new TextEncoder().encode(REFRESH_SECRET_KEY);
 
-  const token = await new jose.SignJWT(payload)
+  const token = await new jose.SignJWT({
+    id: payload.id,
+    username: payload.username,
+    email: payload.email,
+    admin: payload.admin,
+  })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('1d')
@@ -38,7 +49,9 @@ export const generateRefreshToken = async (
   return token;
 };
 
-export const verifyToken = async (req: NextRequest): Promise<string | null> => {
+export const verifyToken = async (
+  req: NextRequest
+): Promise<TokenPayload | null> => {
   const token = req.headers.get('Authorization')?.split(' ')[1];
   console.log('TOKEN: ', token);
 
@@ -49,15 +62,19 @@ export const verifyToken = async (req: NextRequest): Promise<string | null> => {
   try {
     const secret = new TextEncoder().encode(SECRET_KEY);
 
-    const { payload } = await jose.jwtVerify(token, secret, {
-      algorithms: ['HS256'],
-    });
+    const { payload }: { payload: TokenPayload } = await jose.jwtVerify(
+      token,
+      secret,
+      {
+        algorithms: ['HS256'],
+      }
+    );
 
     if (typeof payload !== 'object' || !payload.id) {
       return null;
     }
 
-    return payload.id as string;
+    return payload;
   } catch (err) {
     if (err instanceof jose.errors.JWTExpired) {
       console.log('Token has expired:', err);
@@ -222,4 +239,15 @@ export const validateUpdateProfileBody = async (
     Object.keys(errors).length > 0,
     ResponseError.custom.badRequest_validationError(errors),
   ];
+};
+
+export const extractUserAuthData = (
+  req: NextRequest
+): { userId: string; isAdmin: boolean } => {
+  const userId = req.cookies.get('userId')?.value as string;
+  const isAdmin = req.cookies.get('admin')?.value === 'true';
+  return {
+    userId: userId,
+    isAdmin,
+  };
 };

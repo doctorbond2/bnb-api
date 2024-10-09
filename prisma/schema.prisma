@@ -13,44 +13,46 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  username  String   @unique
-  email     String   @unique
-  firstName String
-  lastName  String
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  admin     Boolean  @default(false)
-  bookings  Booking[]
+  id                String     @id @default(auto()) @map("_id") @db.ObjectId
+  username          String     @unique
+  email             String     @unique
+  firstName         String
+  lastName          String
+  password          String
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  admin             Boolean    @default(false)
+  bookings          Booking[]
   hosted_properties Property[]
 }
 
 model Property {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
   name            String
-  country         String 
+  country         String
   city            String
+  address         String
   price_per_night Int
-  availableFrom   DateTime? 
-  availableUntil  DateTime? 
-  available       Boolean @default(true)
-  host User     @relation(fields: [hostId], references: [id])
-  hostId String @db.ObjectId
-  bookings  Booking[]  
+  availableFrom   DateTime?
+  availableUntil  DateTime?
+  available       Boolean   @default(true)
+  host            User      @relation(fields: [hostId], references: [id])
+  hostId          String    @db.ObjectId
+  bookings        Booking[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model Booking {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  customer   Json
-  created_by User     @relation(fields: [userId], references: [id])
-  userId     String   @db.ObjectId
-  property   Property @relation(fields: [propertyId], references: [id])
-  propertyId String   @db.ObjectId
-  confirmationCode String? @unique
-  startDate DateTime
-  endDate DateTime
-  createdAt  DateTime @default(now())
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  customer         Json
+  created_by       User     @relation(fields: [userId], references: [id])
+  userId           String   @db.ObjectId
+  property         Property @relation(fields: [propertyId], references: [id])
+  propertyId       String   @db.ObjectId
+  confirmationCode String?  @unique
+  startDate        DateTime
+  endDate          DateTime
+  createdAt        DateTime @default(now())
 }

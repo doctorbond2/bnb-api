@@ -1,0 +1,10 @@
+export const getPageQuery = (searchParams: URLSearchParams) => {
+  const params_page = searchParams.get('page') || '1';
+  const params_pageSize = searchParams.get('pageSize') || '10';
+  const page = parseInt(params_page, 10);
+  const pageSize = parseInt(params_pageSize, 10);
+  if (isNaN(page) || isNaN(pageSize)) {
+    return null;
+  }
+  return { page, pageSize };
+};

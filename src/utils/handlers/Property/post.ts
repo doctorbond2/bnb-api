@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import ResponseError from '@/models/classes/responseError';
 import PrismaKit from '@/models/classes/prisma';
 import { Property } from '@/models/types/Property';
+import { ERROR_badRequest } from '@/utils/helpers/error';
 import { validateNewProperty as validateIncomingData } from '@/utils/helpers/property';
 export async function handler_createNewProperty(
   req: NextRequest
@@ -19,10 +20,9 @@ export async function handler_createNewProperty(
 
   try {
     await PrismaKit.property.createProperty(body, userId);
-    return NextResponse.json({ status: 204 });
-  } catch (error) {
-    console.log('Error creating property: ', error);
-    return ResponseError.default.internalServerError();
+    return NextResponse.json({ status: 201 });
+  } catch (error: unknown) {
+    return ERROR_badRequest(error);
   }
 }
 

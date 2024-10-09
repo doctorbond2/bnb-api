@@ -4,6 +4,7 @@ import {
   StatusMessages as Messages,
 } from '@/models/enums/statusCodes';
 import { ValidationErrors } from '../types/Auth';
+import { ValidationMessages } from '../enums/errorMessages';
 
 type GetError = (
   statusCode: Codes,
@@ -15,11 +16,15 @@ const createError = (
   message?: string,
   errors?: ValidationErrors
 ): Response => {
-  return NextResponse.json({
-    message: message || Messages[statusCode],
-    status: statusCode,
-    errors: errors || {},
-  });
+  return NextResponse.json(
+    {
+      message: message || Messages[statusCode],
+      errors: errors || {},
+    },
+    {
+      status: statusCode,
+    }
+  );
 };
 const returnError: GetError = createError;
 
@@ -28,9 +33,12 @@ class ResponseError {
     notFound: () => returnError(Codes.NOT_FOUND),
     badRequest: () => returnError(Codes.BAD_REQUEST),
     unauthorized: () => returnError(Codes.UNAUTHORIZED),
-    invalidToken: () => returnError(Codes.UNAUTHORIZED, 'Invalid token'),
+    invalidToken: () =>
+      returnError(Codes.UNAUTHORIZED, ValidationMessages.INVALID_TOKEN),
     forbidden: () => returnError(Codes.FORBIDDEN),
     internalServerError: () => returnError(Codes.INTERNAL_SERVER_ERROR),
+    badRequest_IdRequired: () =>
+      returnError(Codes.BAD_REQUEST, ValidationMessages.ID_REQUIRED),
   };
   static custom = {
     notFound: (message: string) => returnError(Codes.NOT_FOUND, message),

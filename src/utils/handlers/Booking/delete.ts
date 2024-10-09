@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ResponseError from '@/models/classes/responseError';
-import { ERROR_badRequest } from '@/utils/helpers/error';
-import { extractUserAuthData as auth } from '@/utils/helpers/auth';
 import PrismaKit from '@/models/classes/prisma';
+import { extractUserAuthData as auth } from '@/utils/helpers/auth';
 
-export async function handler_DeleteProperty(
+export async function handler_CancelBooking(
   req: NextRequest,
   id: string
 ): Promise<Response> {
-  const propertyId = id;
-  if (!propertyId) {
+  const bookingId = id;
+  if (!bookingId) {
     return ResponseError.default.badRequest_IdRequired();
   }
   const { userId, isAdmin } = auth(req);
-
   try {
-    await PrismaKit.property.delete(propertyId, userId, isAdmin);
+    await PrismaKit.booking.delete(bookingId, userId, isAdmin);
     return NextResponse.json({ status: 204 });
-  } catch (error: unknown) {
-    return ERROR_badRequest(error);
+  } catch (error) {
+    console.log('Error canceling booking: ', error);
+    return ResponseError.default.internalServerError();
   }
 }

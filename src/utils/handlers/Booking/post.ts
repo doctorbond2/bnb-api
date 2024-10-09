@@ -8,7 +8,7 @@ export async function handler_CreateBooking(
 ): Promise<Response> {
   const body: Booking = await req.json();
   try {
-    const isAvailable = await PrismaKit.checkBookingAvailability(body);
+    const isAvailable = await PrismaKit.booking.checkBookingAvailability(body);
     if (!isAvailable) {
       return ResponseError.custom.badRequest(
         'Property is not available for the selected dates'
@@ -16,7 +16,7 @@ export async function handler_CreateBooking(
     }
     body.confirmationCode = generateConfirmationCode();
 
-    await PrismaKit.createBooking(body);
+    await PrismaKit.booking.create(body);
     return NextResponse.json({
       confirmationCode: body.confirmationCode,
       status: 204,

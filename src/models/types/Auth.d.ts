@@ -57,7 +57,8 @@ export interface ValidationErrors extends ValidationMessages {
   city?: string;
   price_per_night?: string;
 }
-export interface Token {
+export interface TokenPayload {
+  id: string;
   username: string;
   email: string;
   admin: boolean;

@@ -13,6 +13,7 @@ import {
 } from '@/utils/helpers/auth';
 import { User } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
+import PrismaKit from '@/models/classes/prisma';
 export const LoginUser = async (req: NextRequest): Promise<Response> => {
   const body: User = await req.json();
   const [hasErrors, errors] = validateLoginBody(body);
@@ -68,16 +69,7 @@ export const registerUser = async (req: NextRequest): Promise<Response> => {
   }
   const hashedPassword = await hashPassword(body.password);
   try {
-    const user = await prisma.user.create({
-      data: {
-        email: body.email.toLowerCase(),
-        username: body.username.toLowerCase(),
-        password: hashedPassword,
-        firstName: body.firstName.toLowerCase(),
-        lastName: body.lastName.toLowerCase(),
-        admin: !!body.admin,
-      },
-    });
+    const user = await PrismaKit.user.create(body, hashedPassword);
     const token = await generateToken(user);
     const refreshToken = await generateRefreshToken(user);
 
@@ -100,10 +92,11 @@ export const registerUser = async (req: NextRequest): Promise<Response> => {
   } catch (err) {
     if (err instanceof Error) {
       console.log(err.message);
+      return ResponseError.custom.internalServerError(err.message);
     } else {
       console.log(String(err));
+      return ResponseError.custom.internalServerError(String(err));
     }
-    return ResponseError.default.internalServerError();
   }
 };
 export const refreshTokens = async (req: NextRequest): Promise<Response> => {
