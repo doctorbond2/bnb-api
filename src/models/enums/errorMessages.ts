@@ -30,4 +30,7 @@ export enum ErrorMessages {
   LISTED_PROPERTY_EXISTS = 'Property already exists.',
   PROPERTY_HAS_BOOKINGS = 'Property has bookings.',
   PROPERTY_USER_MISMATCH = 'Property does not belong to user.',
+  USER_HAS_PROPERTIES = 'User has properties.',
+  USER_HAS_BOOKINGS = 'User has bookings.',
+  USER_NOT_HOST = 'User is not a host.',
 }

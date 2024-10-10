@@ -78,6 +78,7 @@ export const registerUser = async (req: NextRequest): Promise<Response> => {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
+      fullName: `${user.firstName} ${user.lastName}`,
       admin: !!user.admin,
     };
     return NextResponse.json({

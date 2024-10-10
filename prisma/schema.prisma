@@ -55,6 +55,6 @@ model Booking {
   startDate        DateTime
   endDate          DateTime
   createdAt        DateTime @default(now())
-  pending Boolean @default(true)
-  accepted? Boolean
+  pending          Boolean  @default(true)
+  accepted         Boolean?
 }
