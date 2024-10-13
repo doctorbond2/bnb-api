@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { extractUserAuthData as auth } from '@/utils/helpers/auth';
 import { ERROR_internalServerError } from '@/utils/helpers/error';
 import { getPageQuery } from '@/utils/helpers/url';
-import PrismaKit from '@/models/classes/prisma';
+import db from '@/models/classes/prisma';
+import { Booking } from '@/models/types/Booking';
 export async function handler_GetAllBookings(
   req: NextRequest
 ): Promise<Response> {
@@ -18,7 +19,7 @@ export async function handler_GetAllBookings(
     return ResponseError.default.badRequest();
   }
   try {
-    const bookings = await PrismaKit.admin.getAllBookings(pageQuery);
+    const bookings = await db.admin.getAllBookings(pageQuery);
     return NextResponse.json({ bookings }, { status: 200 });
   } catch (err) {
     return ERROR_internalServerError(err);
@@ -40,8 +41,23 @@ export async function handler_GetBookingById(
 
   const bookingId = id;
   try {
-    const booking = await PrismaKit.booking.getById(bookingId);
+    const booking = await db.booking.getById(bookingId);
     return NextResponse.json({ booking }, { status: 200 });
+  } catch (err) {
+    return ERROR_internalServerError(err);
+  }
+}
+export async function handler_GetUserBookings(
+  req: NextRequest
+): Promise<Response> {
+  const { userId } = auth(req);
+  if (!userId) {
+    return ResponseError.default.unauthorized();
+  }
+  try {
+    const bookings: Booking[] =
+      (await db.booking.getAllUserBookings(userId)) || [];
+    return NextResponse.json({ bookings }, { status: 200 });
   } catch (err) {
     return ERROR_internalServerError(err);
   }

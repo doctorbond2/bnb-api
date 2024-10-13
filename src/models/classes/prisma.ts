@@ -255,7 +255,9 @@ class PrismaKit {
         throw error;
       }
     },
-
+    getAllUserBookings: async (userId: string) => {
+      return await prisma.booking.findMany({ where: { userId } });
+    },
     getAllPropertyBookings: async (propertyId: string) => {
       return await prisma.booking.findMany({ where: { propertyId } });
     },

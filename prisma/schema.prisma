@@ -42,6 +42,7 @@ model Property {
   bookings        Booking[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  Image           Image[]
 }
 
 model Booking {
@@ -54,7 +55,18 @@ model Booking {
   confirmationCode String?  @unique
   startDate        DateTime
   endDate          DateTime
+  images           Image[]
   createdAt        DateTime @default(now())
   pending          Boolean  @default(true)
   accepted         Boolean?
+}
+
+model Image {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  url        String
+  alt        String?
+  property   Property @relation(fields: [propertyId], references: [id])
+  propertyId String   @db.ObjectId
+  Booking    Booking? @relation(fields: [bookingId], references: [id])
+  bookingId  String?  @db.ObjectId
 }

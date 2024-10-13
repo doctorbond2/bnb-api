@@ -15,7 +15,9 @@ import { User } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import PrismaKit from '@/models/classes/prisma';
 export const LoginUser = async (req: NextRequest): Promise<Response> => {
+  console.log('Logging in???');
   const body: User = await req.json();
+  console.log(body);
   const [hasErrors, errors] = validateLoginBody(body);
   if (hasErrors) {
     return errors;
@@ -35,20 +37,22 @@ export const LoginUser = async (req: NextRequest): Promise<Response> => {
     const token = await generateToken(user);
     const refreshToken = await generateRefreshToken(user);
     const userFrontend: UserFrontend = {
+      id: user.id,
       username: user.username,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
       admin: user.admin ? true : false,
     };
-    return NextResponse.json({
-      user: userFrontend,
-      token,
-      refreshToken,
-
-      message: 'You are logged in.',
-      status: 200,
-    });
+    return NextResponse.json(
+      {
+        user: userFrontend,
+        token,
+        refreshToken,
+        message: 'You are logged in.',
+      },
+      { status: 200 }
+    );
   } catch (err) {
     if (err instanceof Error) {
       console.log(err.message);
@@ -74,6 +78,7 @@ export const registerUser = async (req: NextRequest): Promise<Response> => {
     const refreshToken = await generateRefreshToken(user);
 
     const userFrontend: UserFrontend = {
+      id: user.id,
       username: user.username,
       email: user.email,
       firstName: user.firstName,

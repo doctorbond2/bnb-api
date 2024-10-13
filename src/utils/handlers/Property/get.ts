@@ -4,6 +4,7 @@ import { getPageQuery } from '@/utils/helpers/url';
 import PrismaKit from '@/models/classes/prisma';
 import { ERROR_badRequest } from '@/utils/helpers/error';
 import ResponseError from '@/models/classes/responseError';
+import { Property } from '@/models/types/Property';
 export async function handler_GetPropertyListByHostId(
   req: NextRequest,
   id: string
@@ -15,8 +16,10 @@ export async function handler_GetPropertyListByHostId(
   const { userId } = auth(req);
 
   try {
-    const properties = await PrismaKit.property.getHostedProperties(userId);
-    return NextResponse.json({ properties });
+    const properties: Property[] = await PrismaKit.property.getHostedProperties(
+      userId
+    );
+    return NextResponse.json({ properties }, { status: 200 });
   } catch (error: unknown) {
     return ERROR_badRequest(error);
   }

@@ -9,7 +9,7 @@ export interface User extends PrismaUser {
   fullName?: string;
 }
 export interface UserFrontend
-  extends Omit<User, 'password' | 'createdAt' | 'updatedAt' | 'id'> {
+  extends Omit<User, 'password' | 'createdAt' | 'updatedAt'> {
   fullName?: string;
 }
 
