@@ -4,7 +4,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { hostId: string } }
 ) {
-  console.log('test', params);
+  console.log('TEST USER WAY TRIGGERED');
   const id = params.hostId;
   return await getProperties(req, id);
 }

@@ -24,7 +24,7 @@ export const generateToken = async (
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('1h')
+    .setExpirationTime('20s')
     .sign(secret);
 
   return token;
@@ -244,8 +244,11 @@ export const validateUpdateProfileBody = async (
 export const extractUserAuthData = (
   req: NextRequest
 ): { userId: string; isAdmin: boolean } => {
-  const userId = req.cookies.get('userId')?.value as string;
-  const isAdmin = req.cookies.get('admin')?.value === 'true';
+  console.log('Cookies: ' + req.cookies);
+  // const userId = req.cookies.get('userId')?.value as string;
+  // const isAdmin = req.cookies.get('admin')?.value === 'true';
+  const userId = req.headers.get('x-user-id') as string;
+  const isAdmin = req.headers.get('x-admin') === 'true';
   return {
     userId: userId,
     isAdmin,

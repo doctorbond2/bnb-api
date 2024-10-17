@@ -2,7 +2,6 @@ import { AuthRoles } from '../enums/auth';
 import { ValidationMessages } from '../enums/errorMessages';
 type Token = string;
 type RefreshToken = string;
-
 export interface Auth {
   token?: Token;
   refreshToken?: RefreshToken;
@@ -56,6 +55,8 @@ export interface ValidationErrors extends ValidationMessages {
   name?: string;
   city?: string;
   price_per_night?: string;
+  customer?: string;
+  dates?: string;
 }
 export interface TokenPayload {
   id: string;

@@ -3,6 +3,7 @@ import ResponseError from '@/models/classes/responseError';
 import PrismaKit from '@/models/classes/prisma';
 import { Property } from '@/models/types/Property';
 import { ERROR_badRequest } from '@/utils/helpers/error';
+import { extractUserAuthData as auth } from '@/utils/helpers/auth';
 import { validateNewProperty as validateIncomingData } from '@/utils/helpers/property';
 export async function handler_createNewProperty(
   req: NextRequest
@@ -10,10 +11,11 @@ export async function handler_createNewProperty(
   const body: Property = await req.json();
   const [hasErrors, errors] = await validateIncomingData(body);
   if (hasErrors) {
+    console.log('Validation error in createNewProperty');
     return errors;
   }
-  //Tar emot userId från cookies för att signera property med rätt värds id//
-  const userId = req.cookies.get('userId')?.value;
+  const { userId } = auth(req);
+
   if (!userId) {
     return ResponseError.custom.unauthorized('User not authorized');
   }

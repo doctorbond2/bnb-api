@@ -1,5 +1,8 @@
 import { NextRequest } from 'next/server';
-
-export async function GET(req: NextRequest) {
-  return 'Hello from the API';
+import { handler_createNewProperty as createProperty } from '@/utils/handlers/Property/post';
+// export async function GET(req: NextRequest) {
+//   return 'Hello from the API';
+// }
+export async function POST(req: NextRequest) {
+  return await createProperty(req);
 }

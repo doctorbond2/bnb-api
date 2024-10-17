@@ -1,12 +1,11 @@
 import prisma from '@/lib/prisma';
 import { Property } from '../types/Property';
 import { ErrorMessages } from '../enums/errorMessages';
-import { Booking } from '../types/Booking';
+import { NewBooking, NewBookingData } from '../types/Booking';
 import { RegisterInformation } from '../types/Auth';
 
 class PrismaKit {
   contructor() {}
-
   static property = {
     createProperty: async (data: Property, hostId: string) => {
       if (
@@ -210,13 +209,23 @@ class PrismaKit {
     },
   };
   static booking = {
-    create: async (data: Booking) => {
+    create: async (data: NewBooking) => {
+      const newBooking: NewBooking = {
+        ...data,
+        propertyId: data.propertyId,
+        userId: data.userId,
+        customer: JSON.stringify(data.customer),
+      };
+
       await prisma.booking.create({
-        data,
+        data: newBooking,
       });
     },
-    checkBookingAvailability: async (booking: Booking) => {
+    checkBookingAvailability: async (booking: NewBookingData) => {
       const { startDate, endDate, propertyId } = booking;
+      console.log('startDate', startDate);
+      console.log('endDate', endDate);
+      console.log('propertyId', propertyId);
       const isAvailable = await prisma.property.findFirst({
         where: {
           id: propertyId,

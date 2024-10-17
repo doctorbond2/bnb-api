@@ -10,6 +10,7 @@ export async function handler_GetPropertyListByHostId(
   id: string
 ): Promise<Response> {
   const hostId = id;
+  console.log('hostId', hostId);
   if (!hostId) {
     return ResponseError.default.badRequest_IdRequired();
   }
@@ -19,7 +20,8 @@ export async function handler_GetPropertyListByHostId(
     const properties: Property[] = await PrismaKit.property.getHostedProperties(
       userId
     );
-    return NextResponse.json({ properties }, { status: 200 });
+    console.log('properties', properties);
+    return NextResponse.json(properties, { status: 200 });
   } catch (error: unknown) {
     return ERROR_badRequest(error);
   }
@@ -49,7 +51,7 @@ export async function handler_GetPropertyList(
   }
   try {
     const properties = await PrismaKit.property.getAll(pageQuery);
-    return NextResponse.json({ properties });
+    return NextResponse.json({ properties }, { status: 200 });
   } catch (error: unknown) {
     return ERROR_badRequest(error);
   }

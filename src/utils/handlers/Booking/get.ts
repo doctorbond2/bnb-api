@@ -48,16 +48,17 @@ export async function handler_GetBookingById(
   }
 }
 export async function handler_GetUserBookings(
-  req: NextRequest
+  req: NextRequest,
+  id: string
 ): Promise<Response> {
-  const { userId } = auth(req);
+  const userId = id;
   if (!userId) {
     return ResponseError.default.unauthorized();
   }
   try {
     const bookings: Booking[] =
       (await db.booking.getAllUserBookings(userId)) || [];
-    return NextResponse.json({ bookings }, { status: 200 });
+    return NextResponse.json(bookings, { status: 200 });
   } catch (err) {
     return ERROR_internalServerError(err);
   }

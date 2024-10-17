@@ -12,7 +12,6 @@ export const middleware_authenticate_request = async (
 
   const key = validateApiKey(request);
 
-  //KOM IHÅG du la till user ID check här
   if (!user || !user.id) {
     errors.token = M.INVALID_TOKEN;
   }

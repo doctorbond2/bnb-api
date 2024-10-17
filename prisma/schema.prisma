@@ -42,7 +42,7 @@ model Property {
   bookings        Booking[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  Image           Image[]
+  images          Image[]
 }
 
 model Booking {
@@ -57,6 +57,7 @@ model Booking {
   endDate          DateTime
   images           Image[]
   createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   pending          Boolean  @default(true)
   accepted         Boolean?
 }

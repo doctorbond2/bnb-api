@@ -35,6 +35,7 @@ export async function validateNewProperty(
     ValidationErrors.price_per_night =
       'Too high price per night, limit is: 9999';
   }
+
   return [
     Object.keys(ValidationErrors).length > 0,
     ResponseError.custom.badRequest_validationError(ValidationErrors),
