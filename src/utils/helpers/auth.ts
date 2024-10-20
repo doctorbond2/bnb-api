@@ -24,7 +24,7 @@ export const generateToken = async (
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('20s')
+    .setExpirationTime('1h')
     .sign(secret);
 
   return token;
@@ -134,30 +134,26 @@ export const verifyRegisterInformation = async (
     errors.email = ValidationMessages.EMAIL_REQUIRED;
   }
 
-  if (body.username) {
-    try {
-      const usernameAvailable = await PrismaKit.user.checkUsernameAvailability(
-        body.username
-      );
-      if (!usernameAvailable) {
-        errors.username = ValidationMessages.INVALID_USERNAME_NOT_AVAILABLE;
-      }
-    } catch {
-      return [true, ResponseError.default.internalServerError()];
+  try {
+    const usernameAvailable = await PrismaKit.user.checkUsernameAvailability(
+      body.username
+    );
+    if (!usernameAvailable) {
+      errors.username = ValidationMessages.INVALID_USERNAME_NOT_AVAILABLE;
     }
+  } catch {
+    return [true, ResponseError.default.internalServerError()];
   }
 
-  if (body.email) {
-    try {
-      const emailAvailable = await PrismaKit.user.checkEmailAvailability(
-        body.email
-      );
-      if (!emailAvailable) {
-        errors.email = ValidationMessages.INVALID_EMAIL_NOT_AVAILABLE;
-      }
-    } catch {
-      return [true, ResponseError.default.internalServerError()];
+  try {
+    const emailAvailable = await PrismaKit.user.checkEmailAvailability(
+      body.email
+    );
+    if (!emailAvailable) {
+      errors.email = ValidationMessages.INVALID_EMAIL_NOT_AVAILABLE;
     }
+  } catch {
+    return [true, ResponseError.default.internalServerError()];
   }
 
   return [
@@ -181,10 +177,16 @@ export const validateLoginBody = (
 ): [boolean, Response] => {
   const errors: ValidationErrors = {};
 
-  if (body.email === '' || body.password === '') {
+  if (
+    body.username &&
+    (body.username === '' || !body.password || body.password === '')
+  ) {
     errors.password_or_email = ValidationMessages.INVALID_PASSWORD_OR_EMAIL;
   }
-  if (body.username === '' || body.password === '') {
+  if (
+    body.email &&
+    (body.email === '' || !body.password || body.password === '')
+  ) {
     errors.password_or_username =
       ValidationMessages.INVALID_PASSWORD_OR_USERNAME;
   }

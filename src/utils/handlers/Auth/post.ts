@@ -22,10 +22,19 @@ export const LoginUser = async (req: NextRequest): Promise<Response> => {
   if (hasErrors) {
     return errors;
   }
-
+  const search = {
+    key: body.username ? 'username' : 'email',
+    value: body.username
+      ? body.username.toLowerCase()
+      : body.email.toLowerCase(),
+  };
+  console.log('Search:', search);
   try {
     const user: User | null = await prisma.user.findUnique({
-      where: { username: body.username.toLowerCase() },
+      where:
+        search.key === 'username'
+          ? { username: search.value }
+          : { email: search.value },
     });
     if (!user) {
       return ResponseError.custom.notFound(M.USER_NOT_FOUND);
@@ -73,26 +82,9 @@ export const registerUser = async (req: NextRequest): Promise<Response> => {
   }
   const hashedPassword = await hashPassword(body.password);
   try {
-    const user = await PrismaKit.user.create(body, hashedPassword);
-    const token = await generateToken(user);
-    const refreshToken = await generateRefreshToken(user);
+    await PrismaKit.user.create(body, hashedPassword);
 
-    const userFrontend: UserFrontend = {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      fullName: `${user.firstName} ${user.lastName}`,
-      admin: !!user.admin,
-    };
     return NextResponse.json({
-      data: {
-        user: userFrontend,
-        token,
-        refreshToken,
-      },
-      message: 'You are registered.',
       status: 201,
     });
   } catch (err) {

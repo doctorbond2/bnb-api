@@ -21,31 +21,9 @@ export async function handler_createNewProperty(
   }
 
   try {
-    await PrismaKit.property.createProperty(body, userId);
-    return NextResponse.json({ status: 201 });
+    const newProperty = await PrismaKit.property.createProperty(body, userId);
+    return NextResponse.json({ newProperty }, { status: 201 });
   } catch (error: unknown) {
     return ERROR_badRequest(error);
   }
 }
-
-// const isAvailable = await prisma.property.findFirst({
-//   where: {
-//     id: 'property-id',
-//     availableFrom: {
-//       lte: desiredStartDate,  // Property must be available on or before the desired start date
-//     },
-//     availableUntil: {
-//       gte: desiredEndDate,    // Property must be available on or after the desired end date
-//     },
-//     bookings: {
-//       none: {
-//         startDate: {
-//           lte: desiredEndDate, // No bookings should start before or during the desired end date
-//         },
-//         endDate: {
-//           gte: desiredStartDate, // No bookings should end after or during the desired start date
-//         },
-//       },
-//     },
-//   },
-// });

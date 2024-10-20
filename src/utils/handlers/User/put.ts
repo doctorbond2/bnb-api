@@ -4,6 +4,7 @@ import { filterUpdateDetails } from '@/utils/helpers/filters';
 import { validateUpdateProfileBody } from '@/utils/helpers/auth';
 import { comparePassword } from '@/utils/helpers/password';
 import prisma from '@/lib/prisma';
+import { extractUserAuthData as auth } from '@/utils/helpers/auth';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { DB_Updated_User } from '@/models/types/Database';
@@ -13,10 +14,10 @@ export async function updateUser(req: NextRequest): Promise<Response> {
   if (hasError) {
     return errors;
   }
-  const userId = req.cookies.get('userId')?.value;
+  const { userId } = auth(req);
   try {
     const dbRecord = await prisma.user.findUnique({
-      where: { username: body.existing_username },
+      where: { username: body.existing_username, id: userId },
       select: { id: true, password: true },
     });
     if (!dbRecord || dbRecord.id !== userId) {

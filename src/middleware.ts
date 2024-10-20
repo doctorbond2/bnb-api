@@ -37,14 +37,7 @@ export async function middleware(req: NextRequest) {
   if (!user) {
     return ResponseError.custom.unauthorized('User not found');
   }
-  // console.log('user:', user.id);
-  // console.log(typeof user.id);
-  // response.cookies.set('userId', user.id);
-  // if (user && user.admin) {
-  //   response.cookies.set('admin', 'true');
-  // } else {
-  //   response.cookies.set('admin', 'false');
-  // }
+
   response.headers.set('x-admin' as string, user.admin ? 'true' : 'false');
   response.headers.set('x-user-id' as string, user.id);
   response.headers.set('Access-Control-Allow-Origin', origin || '');

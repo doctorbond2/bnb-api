@@ -3,6 +3,7 @@ import { Property } from '../types/Property';
 import { ErrorMessages } from '../enums/errorMessages';
 import { NewBooking, NewBookingData } from '../types/Booking';
 import { RegisterInformation } from '../types/Auth';
+import { BookingStatusEnum as STATUS } from '../enums/general';
 
 class PrismaKit {
   contructor() {}
@@ -210,15 +211,16 @@ class PrismaKit {
   };
   static booking = {
     create: async (data: NewBooking) => {
-      const newBooking: NewBooking = {
-        ...data,
-        propertyId: data.propertyId,
-        userId: data.userId,
-        customer: JSON.stringify(data.customer),
-      };
-
       await prisma.booking.create({
-        data: newBooking,
+        data: {
+          customer: JSON.stringify(data.customer),
+          startDate: data.startDate,
+          endDate: data.endDate,
+          confirmationCode: data.confirmationCode,
+          status: data.status,
+          propertyId: data.propertyId,
+          userId: data.userId,
+        },
       });
     },
     checkBookingAvailability: async (booking: NewBookingData) => {
@@ -226,14 +228,18 @@ class PrismaKit {
       console.log('startDate', startDate);
       console.log('endDate', endDate);
       console.log('propertyId', propertyId);
+      // const property = await prisma.property.findFirst({
+      //   where: { id: propertyId },
+      // });
+      // console.log('property', property);
       const isAvailable = await prisma.property.findFirst({
         where: {
           id: propertyId,
           availableFrom: {
-            lte: startDate,
+            lte: startDate, // startDate must be after or on availableFrom
           },
           availableUntil: {
-            gte: endDate,
+            gte: endDate, // endDate must be before or on availableUntil
           },
           bookings: {
             none: {
@@ -247,6 +253,7 @@ class PrismaKit {
           },
         },
       });
+      console.log('isAvailable:', isAvailable);
       return isAvailable;
     },
     delete: async (bookingId: string, userId: string, isAdmin?: boolean) => {
@@ -285,13 +292,13 @@ class PrismaKit {
         if (!isHost) {
           throw new Error(ErrorMessages.USER_NOT_HOST);
         }
+        const statusUpdate = decision ? STATUS.ACCEPTED : STATUS.REJECTED;
         await prisma.booking.update({
           where: {
             id: bookingId,
           },
           data: {
-            accepted: decision,
-            pending: false,
+            status: statusUpdate,
           },
         });
       } catch (err) {
@@ -312,13 +319,13 @@ class PrismaKit {
   };
   static admin = {
     accept_or_reject_booking: async (bookingId: string, decision: boolean) => {
+      const statusUpdate = decision ? STATUS.ACCEPTED : STATUS.REJECTED;
       await prisma.booking.update({
         where: {
           id: bookingId,
         },
         data: {
-          accepted: decision,
-          pending: false,
+          status: statusUpdate,
         },
       });
     },

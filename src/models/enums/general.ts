@@ -1,7 +1,7 @@
 export enum GeneralStrings {
   codeCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
 }
-export enum BookingStatus {
+export enum BookingStatusEnum {
   PENDING = 'pending',
   ACCEPTED = 'accepted',
   REJECTED = 'rejected',

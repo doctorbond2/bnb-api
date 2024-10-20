@@ -4,6 +4,7 @@ import { generateConfirmationCode } from '@/utils/helpers/password';
 import PrismaKit from '@/models/classes/prisma';
 import { NewBooking, NewBookingData } from '@/models/types/Booking';
 import { extractUserAuthData as auth } from '@/utils/helpers/auth';
+import { BookingStatusEnum as STATUS } from '@/models/enums/general';
 export async function handler_CreateBooking(
   req: NextRequest
 ): Promise<Response> {
@@ -20,12 +21,11 @@ export async function handler_CreateBooking(
         'Property is not available for the selected dates'
       );
     }
-
+    console.log('You passed the check for availability');
     const booking: NewBooking = {
       ...body,
       confirmationCode: generateConfirmationCode(),
-      pending: true,
-      accepted: false,
+      status: STATUS.PENDING,
       userId,
     };
 
@@ -34,7 +34,7 @@ export async function handler_CreateBooking(
       {
         confirmationCode: booking.confirmationCode,
       },
-      { status: 204 }
+      { status: 201 }
     );
   } catch (error) {
     console.log('Error creating booking: ', error);

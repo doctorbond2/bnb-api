@@ -58,8 +58,7 @@ model Booking {
   images           Image[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-  pending          Boolean  @default(true)
-  accepted         Boolean?
+  status           String
 }
 
 model Image {
