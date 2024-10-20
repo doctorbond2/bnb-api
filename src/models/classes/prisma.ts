@@ -272,6 +272,7 @@ class PrismaKit {
       }
     },
     getAllUserBookings: async (userId: string) => {
+      console.log('searching for bookings with userId:', userId);
       return await prisma.booking.findMany({ where: { userId } });
     },
     getAllPropertyBookings: async (propertyId: string) => {

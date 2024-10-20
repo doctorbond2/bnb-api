@@ -28,7 +28,6 @@ export const LoginUser = async (req: NextRequest): Promise<Response> => {
       ? body.username.toLowerCase()
       : body.email.toLowerCase(),
   };
-  console.log('Search:', search);
   try {
     const user: User | null = await prisma.user.findUnique({
       where:
@@ -62,11 +61,12 @@ export const LoginUser = async (req: NextRequest): Promise<Response> => {
       },
       { status: 200 }
     );
-    response.cookies.set('x_api_key', process.env.API_KEY || 'API_KEY', {
+    response.cookies.set('x-api-key', process.env.API_KEY || 'API_KEY', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
     });
+    console.log('API KEY: ', process.env.API_KEY);
     response.cookies.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

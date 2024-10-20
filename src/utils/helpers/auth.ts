@@ -52,11 +52,7 @@ export const generateRefreshToken = async (
 export const verifyToken = async (
   req: NextRequest
 ): Promise<TokenPayload | null> => {
-  // const token = req.headers.get('Authorization')?.split(' ')[1];
   const cookie_token = req.cookies.get('token')?.value;
-
-  // console.log('TOKEN: ', token);
-  console.log('Cookie token.', cookie_token);
 
   if (!cookie_token) {
     return null;
@@ -166,7 +162,9 @@ export const verifyRegisterInformation = async (
 };
 export const validateApiKey = (req: NextRequest) => {
   const validApiKey = process.env.API_KEY || '';
-  const apiKey = req.headers.get('x-api-key');
+  const apiKey = req.cookies.get('x-api-key')?.value;
+  // const x_api_key = req.cookies.get('x-api-key')?.value;
+  // console.log('X-API-KEY: ', x_api_key);
   console.log('API KEY: ', apiKey);
   console.log('VALID API KEY: ', validApiKey);
   if (!apiKey || apiKey !== validApiKey || validApiKey === '') {

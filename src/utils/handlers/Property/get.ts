@@ -50,8 +50,9 @@ export async function handler_GetPropertyList(
     return ResponseError.default.badRequest();
   }
   try {
-    const properties = await PrismaKit.property.getAll(pageQuery);
-    return NextResponse.json({ properties }, { status: 200 });
+    const propertyList = await PrismaKit.property.getAll(pageQuery);
+    console.log('propertyList', propertyList);
+    return NextResponse.json(propertyList, { status: 200 });
   } catch (error: unknown) {
     return ERROR_badRequest(error);
   }

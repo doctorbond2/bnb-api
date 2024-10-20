@@ -5,7 +5,12 @@ import ResponseError from './models/classes/responseError';
 export async function middleware(req: NextRequest) {
   const allowedOrigins = ['http://localhost:8080'];
   const allowedMethods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'];
-  const allowedHeaders = ['Authorization', 'Content-Type', 'X-Api-Key'];
+  const allowedHeaders = [
+    'Authorization',
+    'Content-Type',
+    'X-Api-Key',
+    'x-api-key',
+  ];
 
   const origin = req.headers.get('origin');
 
