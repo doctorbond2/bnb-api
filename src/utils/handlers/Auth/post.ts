@@ -53,7 +53,7 @@ export const LoginUser = async (req: NextRequest): Promise<Response> => {
       lastName: user.lastName,
       admin: user.admin ? true : false,
     };
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         user: userFrontend,
         token,
@@ -62,6 +62,24 @@ export const LoginUser = async (req: NextRequest): Promise<Response> => {
       },
       { status: 200 }
     );
+    response.cookies.set('x_api_key', process.env.API_KEY || 'API_KEY', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+    response.cookies.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+    console.log('token cookie: ', token);
+    response.cookies.set('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+    console.log('refresh cookie: ', refreshToken);
+    return response;
   } catch (err) {
     if (err instanceof Error) {
       console.log(err.message);
@@ -116,13 +134,17 @@ export const refreshTokens = async (req: NextRequest): Promise<Response> => {
 
     const newRefreshToken: string = await generateRefreshToken(decodedUser);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       data: {
         token,
         refreshToken: newRefreshToken,
       },
       status: 200,
     });
+
+    response.cookies.set('token', token);
+    response.cookies.set('refreshToken', refreshToken);
+    return response;
   } catch (err) {
     if (err instanceof Error) {
       console.log(err.message);

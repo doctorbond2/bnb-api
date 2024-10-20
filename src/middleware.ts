@@ -24,7 +24,7 @@ export async function middleware(req: NextRequest) {
       'Access-Control-Allow-Headers',
       allowedHeaders.join(',')
     );
-    response.headers.set('Access-Control-Allow-Credentials', 'true'); // Include this if you're dealing with credentials
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
     return response;
   }
   const [hasAuthErrors, authErrors, user] =

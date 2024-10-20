@@ -52,10 +52,13 @@ export const generateRefreshToken = async (
 export const verifyToken = async (
   req: NextRequest
 ): Promise<TokenPayload | null> => {
-  const token = req.headers.get('Authorization')?.split(' ')[1];
-  console.log('TOKEN: ', token);
+  // const token = req.headers.get('Authorization')?.split(' ')[1];
+  const cookie_token = req.cookies.get('token')?.value;
 
-  if (!token) {
+  // console.log('TOKEN: ', token);
+  console.log('Cookie token.', cookie_token);
+
+  if (!cookie_token) {
     return null;
   }
 
@@ -63,7 +66,7 @@ export const verifyToken = async (
     const secret = new TextEncoder().encode(SECRET_KEY);
 
     const { payload }: { payload: TokenPayload } = await jose.jwtVerify(
-      token,
+      cookie_token,
       secret,
       {
         algorithms: ['HS256'],
