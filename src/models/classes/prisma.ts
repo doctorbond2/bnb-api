@@ -49,11 +49,19 @@ class PrismaKit {
         })) || []
       );
     },
-    getById: async (propertyId: string) => {
+    getById: async (propertyId: string, populateBookings: boolean) => {
       return await prisma.property.findUnique({
-        where: {
-          id: propertyId,
-        },
+        where: { id: propertyId },
+        include: populateBookings
+          ? {
+              bookings: {
+                select: {
+                  startDate: true,
+                  endDate: true,
+                },
+              },
+            }
+          : undefined,
       });
     },
     getAll: async (pageQuery: { page: number; pageSize: number }) => {

@@ -55,8 +55,6 @@ export const LoginUser = async (req: NextRequest): Promise<Response> => {
     const response = NextResponse.json(
       {
         user: userFrontend,
-        token,
-        refreshToken,
         message: 'You are logged in.',
       },
       { status: 200 }
@@ -72,13 +70,12 @@ export const LoginUser = async (req: NextRequest): Promise<Response> => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
     });
-    console.log('token cookie: ', token);
     response.cookies.set('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
     });
-    console.log('refresh cookie: ', refreshToken);
+
     return response;
   } catch (err) {
     if (err instanceof Error) {
@@ -116,14 +113,11 @@ export const registerUser = async (req: NextRequest): Promise<Response> => {
   }
 };
 export const refreshTokens = async (req: NextRequest): Promise<Response> => {
-  const body = await req.json();
-
-  if (!body.refreshToken) {
+  const refreshToken = req.cookies.get('refreshToken')?.value;
+  console.log('REFRESHTOKEN FROM COOKIE: ', refreshToken);
+  if (!refreshToken) {
     return ResponseError.custom.unauthorized('No refresh token found');
   }
-
-  const { refreshToken } = body;
-
   try {
     const decodedUser = await verifyRefreshToken(refreshToken);
     if (!decodedUser) {
@@ -133,17 +127,20 @@ export const refreshTokens = async (req: NextRequest): Promise<Response> => {
     const token: string = await generateToken(decodedUser);
 
     const newRefreshToken: string = await generateRefreshToken(decodedUser);
-
     const response = NextResponse.json({
-      data: {
-        token,
-        refreshToken: newRefreshToken,
-      },
       status: 200,
     });
+    response.cookies.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+    response.cookies.set('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
 
-    response.cookies.set('token', token);
-    response.cookies.set('refreshToken', refreshToken);
     return response;
   } catch (err) {
     if (err instanceof Error) {
@@ -153,4 +150,33 @@ export const refreshTokens = async (req: NextRequest): Promise<Response> => {
     }
     return ResponseError.default.internalServerError();
   }
+};
+export const handler_logout = async (req: NextRequest): Promise<Response> => {
+  if (!req || 5 < 4) {
+    console.log('meme');
+  }
+  console.log('Logging out...');
+  const response: NextResponse = NextResponse.json(
+    { message: 'Logged out!' },
+    { status: 200 }
+  );
+  response.cookies.set('token', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    expires: new Date(0),
+  });
+  response.cookies.set('refreshToken', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    expires: new Date(0),
+  });
+  response.cookies.set('x-api-key', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    expires: new Date(0),
+  });
+  return response;
 };

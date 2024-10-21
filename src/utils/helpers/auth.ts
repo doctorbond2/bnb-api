@@ -24,7 +24,7 @@ export const generateToken = async (
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('1h')
+    .setExpirationTime('20s')
     .sign(secret);
 
   return token;

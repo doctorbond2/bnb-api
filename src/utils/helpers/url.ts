@@ -13,3 +13,14 @@ export const getPageQuery = (
   }
   return { page, pageSize };
 };
+export const getQuery = (
+  searchParams: URLSearchParams
+): {
+  [key: string]: string;
+} => {
+  const query: { [key: string]: string } = {};
+  searchParams.forEach((value, key) => {
+    query[key] = value;
+  });
+  return query;
+};

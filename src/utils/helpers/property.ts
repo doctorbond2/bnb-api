@@ -3,14 +3,6 @@ import { Property } from '@/models/types/Property';
 import { ValidationMessages } from '@/models/enums/errorMessages';
 import ResponseError from '@/models/classes/responseError';
 
-// name: string;
-// id: string;
-// country: string;
-// city: string;
-// price_per_night: number;
-// availableFrom: Date | null;
-// availableUntil: Date | null;
-// available: boolean;
 export async function validateNewProperty(
   body: Property
 ): Promise<[boolean, Response]> {
