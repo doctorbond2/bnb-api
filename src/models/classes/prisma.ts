@@ -26,12 +26,14 @@ class PrismaKit {
 
       const existingProperty = await prisma.property.findFirst({
         where: {
+          name: data.name,
           city: data.city,
           country: data.country,
           address: data.address,
         },
       });
       if (existingProperty) {
+        console.log('existingProperty', existingProperty);
         throw new Error(ErrorMessages.LISTED_PROPERTY_EXISTS);
       }
 
