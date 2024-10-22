@@ -1,10 +1,9 @@
 import { ValidationErrors } from '@/models/types/Auth';
-import { Property } from '@/models/types/Property';
 import { ValidationMessages } from '@/models/enums/errorMessages';
 import ResponseError from '@/models/classes/responseError';
-
+import { NewPropertyData } from '@/models/types/Property';
 export async function validateNewProperty(
-  body: Property
+  body: NewPropertyData
 ): Promise<[boolean, Response]> {
   const ValidationErrors: ValidationErrors = {};
   if (!body) {

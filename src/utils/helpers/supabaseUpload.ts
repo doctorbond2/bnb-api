@@ -20,7 +20,7 @@ export async function uploadPropertyImages(
       const fileName = `${folderName}/${Date.now()}_${file.name}`; // Create a unique file name
 
       const { data, error } = await supabase.storage
-        .from('your-bucket-name') // Replace with your Supabase storage bucket name
+        .from('bnb-property-images') // Replace with your Supabase storage bucket name
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: false, // Do not overwrite existing files
@@ -31,7 +31,7 @@ export async function uploadPropertyImages(
       }
 
       const { data: publicUrlData } = supabase.storage
-        .from('your-bucket-name')
+        .from('bnb-property-images')
         .getPublicUrl(data?.path as string);
 
       if (publicUrlData) {

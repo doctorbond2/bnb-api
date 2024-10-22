@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import ResponseError from '@/models/classes/responseError';
 import PrismaKit from '@/models/classes/prisma';
 import { Property } from '@/models/types/Property';
+import { NewPropertyData } from '@/models/types/Property';
 import { ERROR_badRequest } from '@/utils/helpers/error';
 import { extractUserAuthData as auth } from '@/utils/helpers/auth';
 import { validateNewProperty as validateIncomingData } from '@/utils/helpers/property';
 export async function handler_createNewProperty(
   req: NextRequest
 ): Promise<Response> {
-  const body: Property = await req.json();
+  const body: NewPropertyData = await req.json();
   const [hasErrors, errors] = await validateIncomingData(body);
   if (hasErrors) {
     console.log('Validation error in createNewProperty');
