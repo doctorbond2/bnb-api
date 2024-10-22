@@ -6,7 +6,7 @@ import { RegisterInformation } from '../types/Auth';
 import { BookingStatusEnum as STATUS } from '../enums/general';
 import { NewImage } from '../types/Image';
 // import { uploadPropertyImages } from '@/utils/helpers/uploadImage';
-
+import { uploadPropertyImages } from '@/utils/helpers/supabaseUpload';
 class PrismaKit {
   contructor() {}
   static property = {
@@ -58,7 +58,6 @@ class PrismaKit {
           await prisma.image.createMany({ data: dbImages });
         }
 
-        await prisma.image.createMany({ data: dbImages });
         // }
 
         // if (data.propertyImageUrls && data.propertyImageUrls.length > 0) {
