@@ -5,7 +5,7 @@ import { NewBooking, NewBookingData } from '../types/Booking';
 import { RegisterInformation } from '../types/Auth';
 import { BookingStatusEnum as STATUS } from '../enums/general';
 import { NewImage } from '../types/Image';
-import { uploadPropertyImages } from '@/utils/helpers/uploadImage';
+// import { uploadPropertyImages } from '@/utils/helpers/uploadImage';
 
 class PrismaKit {
   contructor() {}
@@ -42,16 +42,15 @@ class PrismaKit {
             hostId,
           },
         });
-
-        if (data.propertyImageUrls && data.propertyImageUrls.length > 0) {
+        if (data.propertyImageFiles && data.propertyImageFiles.length > 0) {
           const secureImageUrls = await uploadPropertyImages(
-            data.propertyImageUrls
+            data.propertyImageFiles // Array of image files (from form-data or frontend)
           );
 
           const dbImages: NewImage[] = secureImageUrls.map(
             (imageUrl: string, index: number) => ({
               url: imageUrl,
-              alt: `property-image-${index}-${imageUrl.split('/').pop()}`,
+              alt: `property-image-${index}`,
               propertyId: newDbEntry.id,
             })
           );
@@ -59,10 +58,31 @@ class PrismaKit {
           await prisma.image.createMany({ data: dbImages });
         }
 
+        await prisma.image.createMany({ data: dbImages });
+        // }
+
+        // if (data.propertyImageUrls && data.propertyImageUrls.length > 0) {
+        //   const secureImageUrls = await uploadPropertyImages(
+        //     data.propertyImageUrls
+        //   );
+
+        //   const dbImages: NewImage[] = secureImageUrls.map(
+        //     (imageUrl: string, index: number) => ({
+        //       url: imageUrl,
+        //       alt: `property-image-${index}-${imageUrl.split('/').pop()}`,
+        //       propertyId: newDbEntry.id,
+        //     })
+        //   );
+
+        //   await prisma.image.createMany({ data: dbImages });
+        // }
+
         return newDbEntry;
       });
     },
+
     getHostedProperties: async (hostId: string) => {
+      console.log('hostId', hostId);
       return (
         (await prisma.property.findMany({
           where: {

@@ -4,7 +4,6 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { hostId: string } }
 ) {
-  console.log('TEST PROTECETD WAY TRIGGERED');
   const id = params.hostId;
   return await getProperties(req, id);
 }

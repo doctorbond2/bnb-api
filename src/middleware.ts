@@ -3,7 +3,6 @@ import { middleware_authenticate_request } from './utils/middleware/auth';
 import ResponseError from './models/classes/responseError';
 
 export async function middleware(req: NextRequest) {
-  console.log('middleware');
   const allowedOrigins = ['http://localhost:8080'];
   const allowedMethods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'];
   const allowedHeaders = [
@@ -14,13 +13,15 @@ export async function middleware(req: NextRequest) {
   ];
 
   const origin = req.headers.get('origin');
-
+  console.log('Incoming request origin:', origin);
+  console.log('Request method:', req.method);
   if (origin && !allowedOrigins.includes(origin)) {
+    console.log('CORS Not Allowed:', origin);
     return NextResponse.json({ error: 'CORS Not Allowed' }, { status: 403 });
   }
 
   if (req.method === 'OPTIONS') {
-    console.log('OPTIONS');
+    console.log('Handling OPTIONS request');
     const response = new NextResponse(null, { status: 204 });
     response.headers.set('Access-Control-Allow-Origin', origin || '');
     response.headers.set(
@@ -34,6 +35,7 @@ export async function middleware(req: NextRequest) {
     response.headers.set('Access-Control-Allow-Credentials', 'true');
     return response;
   }
+  const response = NextResponse.next();
   if (!req.nextUrl.pathname.startsWith('/api/auth')) {
     const [hasAuthErrors, authErrors, user] =
       await middleware_authenticate_request(req);
@@ -44,12 +46,10 @@ export async function middleware(req: NextRequest) {
     if (!user) {
       return ResponseError.custom.unauthorized('User not found');
     }
+    response.headers.set('x-admin' as string, user.admin ? 'true' : 'false');
+    response.headers.set('x-user-id' as string, user.id);
   }
 
-  const response = NextResponse.next();
-
-  // response.headers.set('x-admin' as string, user.admin ? 'true' : 'false');
-  // response.headers.set('x-user-id' as string, user.id);
   response.headers.set('Access-Control-Allow-Origin', origin || '');
   response.headers.set(
     'Access-Control-Allow-Methods',
