@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import UserContextProvider from '@/context/UserContext';
-import FooterLayout from '@/components/client/footer/FooterLayout';
 export const metadata: Metadata = {
-  title: 'Chatup-plus',
-  description: 'Next version of chatup application',
+  title: 'bnb-api-server',
+  description: 'bnb-api-server',
 };
 
 export default function RootLayout({
@@ -14,15 +12,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
-        <UserContextProvider>
-          <header></header>
-
-          {children}
-
-          <FooterLayout />
-        </UserContextProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

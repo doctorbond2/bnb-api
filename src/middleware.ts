@@ -3,6 +3,7 @@ import { middleware_authenticate_request } from './utils/middleware/auth';
 import ResponseError from './models/classes/responseError';
 
 export async function middleware(req: NextRequest) {
+  console.log('middleware');
   const allowedOrigins = ['http://localhost:8080'];
   const allowedMethods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'];
   const allowedHeaders = [
@@ -19,7 +20,8 @@ export async function middleware(req: NextRequest) {
   }
 
   if (req.method === 'OPTIONS') {
-    const response = new NextResponse(null, { status: 200 });
+    console.log('OPTIONS');
+    const response = new NextResponse(null, { status: 204 });
     response.headers.set('Access-Control-Allow-Origin', origin || '');
     response.headers.set(
       'Access-Control-Allow-Methods',
@@ -32,19 +34,22 @@ export async function middleware(req: NextRequest) {
     response.headers.set('Access-Control-Allow-Credentials', 'true');
     return response;
   }
-  const [hasAuthErrors, authErrors, user] =
-    await middleware_authenticate_request(req);
-  if (hasAuthErrors) {
-    return NextResponse.json(authErrors, { status: 401 });
+  if (!req.nextUrl.pathname.startsWith('/api/auth')) {
+    const [hasAuthErrors, authErrors, user] =
+      await middleware_authenticate_request(req);
+    if (hasAuthErrors) {
+      return NextResponse.json(authErrors, { status: 401 });
+    }
+
+    if (!user) {
+      return ResponseError.custom.unauthorized('User not found');
+    }
   }
 
   const response = NextResponse.next();
-  if (!user) {
-    return ResponseError.custom.unauthorized('User not found');
-  }
 
-  response.headers.set('x-admin' as string, user.admin ? 'true' : 'false');
-  response.headers.set('x-user-id' as string, user.id);
+  // response.headers.set('x-admin' as string, user.admin ? 'true' : 'false');
+  // response.headers.set('x-user-id' as string, user.id);
   response.headers.set('Access-Control-Allow-Origin', origin || '');
   response.headers.set(
     'Access-Control-Allow-Methods',
@@ -66,5 +71,10 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/api/users/:path*', '/api/admin/:path*', '/api/protected/:path*'],
+  matcher: [
+    '/api/users/:path*',
+    '/api/admin/:path*',
+    '/api/protected/:path*',
+    '/api/auth/:path*',
+  ],
 };

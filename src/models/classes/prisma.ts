@@ -4,6 +4,8 @@ import { ErrorMessages } from '../enums/errorMessages';
 import { NewBooking, NewBookingData } from '../types/Booking';
 import { RegisterInformation } from '../types/Auth';
 import { BookingStatusEnum as STATUS } from '../enums/general';
+import { NewImage } from '../types/Image';
+import { uploadPropertyImages } from '@/utils/helpers/uploadImage';
 
 class PrismaKit {
   contructor() {}
@@ -33,11 +35,31 @@ class PrismaKit {
         throw new Error(ErrorMessages.LISTED_PROPERTY_EXISTS);
       }
 
-      await prisma.property.create({
-        data: {
-          ...data,
-          hostId,
-        },
+      return await prisma.$transaction(async (prisma) => {
+        const newDbEntry = await prisma.property.create({
+          data: {
+            ...data,
+            hostId,
+          },
+        });
+
+        if (data.propertyImageUrls && data.propertyImageUrls.length > 0) {
+          const secureImageUrls = await uploadPropertyImages(
+            data.propertyImageUrls
+          );
+
+          const dbImages: NewImage[] = secureImageUrls.map(
+            (imageUrl: string, index: number) => ({
+              url: imageUrl,
+              alt: `property-image-${index}-${imageUrl.split('/').pop()}`,
+              propertyId: newDbEntry.id,
+            })
+          );
+
+          await prisma.image.createMany({ data: dbImages });
+        }
+
+        return newDbEntry;
       });
     },
     getHostedProperties: async (hostId: string) => {
@@ -324,6 +346,21 @@ class PrismaKit {
           id: bookingId,
         },
       });
+    },
+  };
+  static image = {
+    add_images: async (images: NewImage[]) => {
+      try {
+        await prisma.image.createMany({
+          data: images,
+        });
+      } catch (err) {
+        if (err instanceof Error) {
+          throw new Error(err.message);
+        } else {
+          throw new Error(String(err));
+        }
+      }
     },
   };
   static admin = {

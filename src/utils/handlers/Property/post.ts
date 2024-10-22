@@ -21,7 +21,11 @@ export async function handler_createNewProperty(
   }
 
   try {
-    const newProperty = await PrismaKit.property.createProperty(body, userId);
+    const newProperty: Property = await PrismaKit.property.createProperty(
+      body,
+      userId
+    );
+
     return NextResponse.json({ newProperty }, { status: 201 });
   } catch (error: unknown) {
     return ERROR_badRequest(error);
