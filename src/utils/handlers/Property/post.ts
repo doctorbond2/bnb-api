@@ -10,6 +10,7 @@ export async function handler_createNewProperty(
   req: NextRequest
 ): Promise<Response> {
   const body: NewPropertyData = await req.json();
+
   const [hasErrors, errors] = await validateIncomingData(body);
   if (hasErrors) {
     console.log('Validation error in createNewProperty');

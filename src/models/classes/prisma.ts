@@ -5,9 +5,7 @@ import { NewBooking, NewBookingData } from '../types/Booking';
 import { RegisterInformation } from '../types/Auth';
 import { BookingStatusEnum as STATUS } from '../enums/general';
 import { NewImage } from '../types/Image';
-// import { uploadPropertyImages } from '@/utils/helpers/uploadImage';
 import { NewPropertyData } from '../types/Property';
-import { uploadPropertyImages } from '@/utils/helpers/supabaseUpload';
 class PrismaKit {
   contructor() {}
   static property = {
@@ -19,8 +17,9 @@ class PrismaKit {
       ) {
         data.available = false;
       }
-      const imageFiles = data.imageFiles || null;
-      delete data.imageFiles;
+      const imageUrls = data.imageUrls || null;
+
+      delete data.imageUrls;
       const isUser = await this.user.checkId(hostId);
       if (!isUser) {
         throw new Error('User not found');
@@ -46,40 +45,19 @@ class PrismaKit {
             hostId,
           },
         });
-        if (imageFiles && imageFiles.length > 0) {
-          const secureImageUrls = await uploadPropertyImages(
-            imageFiles // Array of image files (from form-data or frontend)
-          );
-
-          const dbImages: NewImage[] = secureImageUrls.map(
+        if (imageUrls && imageUrls.length > 0) {
+          const dbImages: NewImage[] = imageUrls.map(
             (imageUrl: string, index: number) => ({
               url: imageUrl,
-              alt: `property-image-${index}`,
+              alt: `property-image-${index}-${
+                newDbEntry.id
+              }-${new Date().getTime()}`,
               propertyId: newDbEntry.id,
             })
           );
 
           await prisma.image.createMany({ data: dbImages });
         }
-
-        // }
-
-        // if (data.propertyImageUrls && data.propertyImageUrls.length > 0) {
-        //   const secureImageUrls = await uploadPropertyImages(
-        //     data.propertyImageUrls
-        //   );
-
-        //   const dbImages: NewImage[] = secureImageUrls.map(
-        //     (imageUrl: string, index: number) => ({
-        //       url: imageUrl,
-        //       alt: `property-image-${index}-${imageUrl.split('/').pop()}`,
-        //       propertyId: newDbEntry.id,
-        //     })
-        //   );
-
-        //   await prisma.image.createMany({ data: dbImages });
-        // }
-
         return newDbEntry;
       });
     },

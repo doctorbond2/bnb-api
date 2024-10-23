@@ -13,7 +13,7 @@ export async function uploadPropertyImages(
   folderName = 'properties'
 ): Promise<string[]> {
   const imageUrls: string[] = [];
-
+  console.log('images', images);
   try {
     for (let i = 0; i < images.length; i++) {
       const file = images[i];

@@ -1,19 +1,30 @@
-import cloudinary from 'cloudinary';
+// import cloudinary from 'cloudinary';
 
-cloudinary.v2.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-  api_secret: process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET,
-});
+// const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dnipwrfev';
+// const apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY || '636221143995129';
+// const apiSecret =
+//   process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET ||
+//   'ntxUJavFFJquxfReNnKnrRZOQII';
 
-console.log(
-  'CLOUDINARY_CLOUD_NAME:',
-  process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
-);
-console.log('CLOUDINARY_API_KEY:', process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY);
-console.log(
-  'CLOUDINARY_API_SECRET:',
-  process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET
-);
+// if (!cloudName || !apiKey || !apiSecret) {
+//   throw new Error(
+//     'Cloudinary configuration is missing. Please check your environment variables.'
+//   );
+// }
+// cloudinary.v2.config({
+//   cloud_name: cloudName,
+//   api_key: apiKey,
+//   api_secret: apiSecret,
+// });
 
-export default cloudinary;
+// console.log(
+//   'CLOUDINARY_CLOUD_NAME:',
+//   process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+// );
+// console.log('CLOUDINARY_API_KEY:', process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY);
+// console.log(
+//   'CLOUDINARY_API_SECRET:',
+//   process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET
+// );
+
+// export default cloudinary;

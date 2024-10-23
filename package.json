@@ -14,7 +14,6 @@
     "@supabase/supabase-js": "^2.45.6",
     "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
-    "cloudinary": "^2.5.1",
     "jose": "^5.9.3",
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",

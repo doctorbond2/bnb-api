@@ -12,5 +12,5 @@ export interface NewPropertyData {
   available: boolean;
   availableFrom: Date | null;
   availableUntil: Date | null;
-  imageFiles?: File[];
+  imageUrls?: string[];
 }

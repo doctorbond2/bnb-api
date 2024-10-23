@@ -1,16 +1,20 @@
 // import cloudinary from '@/lib/cloudinaryConfig';
 
-// async function uploadPropertyImages(imageUrls: string[]): Promise<string[]> {
+// async function uploadPropertyImages(imageFiles: File[]): Promise<string[]> {
 //   try {
 //     const uploadResults = await Promise.all(
-//       imageUrls.map((url) =>
-//         cloudinary.v2.uploader.upload(url, {
-//           folder: 'properties',
-//         })
-//       )
+//       imageFiles.map(async (file) => {
+//         return cloudinary.v2.uploader
+//           .upload(file, {
+//             folder: 'properties',
+//           })
+//           .then((result) => result.secure_url)
+//           .catch((error) => {
+//             throw new Error(`Error uploading image: ${error.message}`);
+//           });
+//       })
 //     );
-//     const secureUrls = uploadResults.map((result) => result.secure_url);
-//     return secureUrls;
+//     return uploadResults;
 //   } catch (error) {
 //     if (error instanceof Error) {
 //       throw new Error(error.message);
