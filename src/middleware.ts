@@ -13,15 +13,13 @@ export async function middleware(req: NextRequest) {
   ];
 
   const origin = req.headers.get('origin');
-  console.log('Incoming request origin:', origin);
-  console.log('Request method:', req.method);
+
   if (origin && !allowedOrigins.includes(origin)) {
     console.log('CORS Not Allowed:', origin);
     return NextResponse.json({ error: 'CORS Not Allowed' }, { status: 403 });
   }
 
   if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS request');
     const response = new NextResponse(null, { status: 204 });
     response.headers.set('Access-Control-Allow-Origin', origin || '');
     response.headers.set(
@@ -36,6 +34,7 @@ export async function middleware(req: NextRequest) {
     return response;
   }
   const response = NextResponse.next();
+
   if (!req.nextUrl.pathname.startsWith('/api/auth')) {
     const [hasAuthErrors, authErrors, user] =
       await middleware_authenticate_request(req);

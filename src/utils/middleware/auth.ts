@@ -8,6 +8,7 @@ export const middleware_authenticate_request = async (
   request: NextRequest
 ): Promise<[boolean, ValidationErrors, TokenPayload | null]> => {
   const errors: ValidationErrors = {};
+
   const user = await verifyToken(request);
 
   const key = validateApiKey(request);

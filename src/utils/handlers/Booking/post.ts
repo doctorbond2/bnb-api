@@ -29,13 +29,8 @@ export async function handler_CreateBooking(
       userId,
     };
 
-    await PrismaKit.booking.create(booking);
-    return NextResponse.json(
-      {
-        confirmationCode: booking.confirmationCode,
-      },
-      { status: 201 }
-    );
+    const newDbEntry = await PrismaKit.booking.create(booking);
+    return NextResponse.json(newDbEntry, { status: 201 });
   } catch (error) {
     console.log('Error creating booking: ', error);
     return ResponseError.default.internalServerError();

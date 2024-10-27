@@ -34,7 +34,6 @@ class PrismaKit {
         },
       });
       if (existingProperty) {
-        console.log('existingProperty', existingProperty);
         throw new Error(ErrorMessages.LISTED_PROPERTY_EXISTS);
       }
 
@@ -63,11 +62,14 @@ class PrismaKit {
     },
 
     getHostedProperties: async (hostId: string) => {
-      console.log('hostId', hostId);
       return (
         (await prisma.property.findMany({
           where: {
             hostId,
+          },
+          include: {
+            bookings: true,
+            images: true,
           },
         })) || []
       );
@@ -100,6 +102,15 @@ class PrismaKit {
         orderBy: {
           createdAt: 'desc',
         },
+        include: {
+          images: true,
+          host: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
       });
       const totalProperties = await prisma.property.count();
       return {
@@ -108,10 +119,10 @@ class PrismaKit {
         data: properties,
       };
     },
-    update: async (data: Property) => {
-      await prisma.property.update({
+    update: async (data: Property, propertyId: string) => {
+      return await prisma.property.update({
         where: {
-          id: data.id,
+          id: propertyId,
         },
         data,
       });
@@ -242,7 +253,7 @@ class PrismaKit {
   };
   static booking = {
     create: async (data: NewBooking) => {
-      await prisma.booking.create({
+      return await prisma.booking.create({
         data: {
           customer: JSON.stringify(data.customer),
           startDate: data.startDate,
@@ -256,21 +267,18 @@ class PrismaKit {
     },
     checkBookingAvailability: async (booking: NewBookingData) => {
       const { startDate, endDate, propertyId } = booking;
-      console.log('startDate', startDate);
-      console.log('endDate', endDate);
-      console.log('propertyId', propertyId);
       // const property = await prisma.property.findFirst({
       //   where: { id: propertyId },
       // });
-      // console.log('property', property);
+
       const isAvailable = await prisma.property.findFirst({
         where: {
           id: propertyId,
           availableFrom: {
-            lte: startDate, // startDate must be after or on availableFrom
+            lte: startDate,
           },
           availableUntil: {
-            gte: endDate, // endDate must be before or on availableUntil
+            gte: endDate,
           },
           bookings: {
             none: {
@@ -284,7 +292,6 @@ class PrismaKit {
           },
         },
       });
-      console.log('isAvailable:', isAvailable);
       return isAvailable;
     },
     delete: async (bookingId: string, userId: string, isAdmin?: boolean) => {
@@ -304,10 +311,27 @@ class PrismaKit {
     },
     getAllUserBookings: async (userId: string) => {
       console.log('searching for bookings with userId:', userId);
-      return await prisma.booking.findMany({ where: { userId } });
+      return await prisma.booking.findMany({
+        where: { userId },
+        include: {
+          property: {
+            select: {
+              name: true,
+              host: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                },
+              },
+            },
+          },
+        },
+      });
     },
     getAllPropertyBookings: async (propertyId: string) => {
-      return await prisma.booking.findMany({ where: { propertyId } });
+      return await prisma.booking.findMany({
+        where: { propertyId },
+      });
     },
     decideBooking: async (
       bookingId: string,

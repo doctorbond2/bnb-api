@@ -4,6 +4,8 @@ export const hashPassword = async (password: string) => {
   return await bcrypt.hash(password, 10);
 };
 export const comparePassword = async (password: string, hash: string) => {
+  const test = await bcrypt.compare(password, hash);
+  console.log('TEST: ', test);
   return await bcrypt.compare(password, hash);
 };
 export const generateConfirmationCode = (): string => {

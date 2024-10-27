@@ -15,9 +15,7 @@ import { User } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import PrismaKit from '@/models/classes/prisma';
 export const LoginUser = async (req: NextRequest): Promise<Response> => {
-  console.log('Logging in???');
   const body: User = await req.json();
-  console.log(body);
   const [hasErrors, errors] = validateLoginBody(body);
   if (hasErrors) {
     return errors;
@@ -52,28 +50,36 @@ export const LoginUser = async (req: NextRequest): Promise<Response> => {
       lastName: user.lastName,
       admin: user.admin ? true : false,
     };
+    const tokenExpiry = new Date();
+    tokenExpiry.setMinutes(tokenExpiry.getMinutes() + 15);
+
+    const refreshTokenExpiry = new Date();
+    refreshTokenExpiry.setDate(refreshTokenExpiry.getDate() + 1);
+
     const response = NextResponse.json(
       {
         user: userFrontend,
         message: 'You are logged in.',
+        tokenExpiry,
+        refreshTokenExpiry,
       },
       { status: 200 }
     );
     response.cookies.set('x-api-key', process.env.API_KEY || 'API_KEY', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'none',
     });
     console.log('API KEY: ', process.env.API_KEY);
     response.cookies.set('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'none',
     });
     response.cookies.set('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'none',
     });
 
     return response;
@@ -126,19 +132,28 @@ export const refreshTokens = async (req: NextRequest): Promise<Response> => {
 
     const token: string = await generateToken(decodedUser);
 
+    const tokenExpiry = new Date();
+    tokenExpiry.setMinutes(tokenExpiry.getMinutes() + 15);
+
+    const refreshTokenExpiry = new Date();
+    refreshTokenExpiry.setDate(refreshTokenExpiry.getDate() + 1);
+
     const newRefreshToken: string = await generateRefreshToken(decodedUser);
-    const response = NextResponse.json({
-      status: 200,
-    });
+    const response = NextResponse.json(
+      { tokenExpiry, refreshTokenExpiry },
+      {
+        status: 200,
+      }
+    );
     response.cookies.set('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'none',
     });
     response.cookies.set('refreshToken', newRefreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'none',
     });
 
     return response;
@@ -160,22 +175,23 @@ export const handler_logout = async (req: NextRequest): Promise<Response> => {
     { message: 'Logged out!' },
     { status: 200 }
   );
+
   response.cookies.set('token', '', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: true,
+    sameSite: 'none',
     expires: new Date(0),
   });
   response.cookies.set('refreshToken', '', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: true,
+    sameSite: 'none',
     expires: new Date(0),
   });
   response.cookies.set('x-api-key', '', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: true,
+    sameSite: 'none',
     expires: new Date(0),
   });
   return response;

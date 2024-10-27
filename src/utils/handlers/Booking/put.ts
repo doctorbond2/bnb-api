@@ -14,6 +14,7 @@ export async function handler_AcceptRejectBooking(
   if (!userId) {
     return ResponseError.default.unauthorized();
   }
+
   const bookingId = id;
   if (!bookingId) {
     return ResponseError.default.badRequest_IdRequired();

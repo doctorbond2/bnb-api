@@ -14,7 +14,6 @@ export const generateToken = async (
   payload: jose.JWTPayload
 ): Promise<string> => {
   const secret = new TextEncoder().encode(SECRET_KEY);
-  console.log('Encoded Secret:', secret);
 
   const token = await new jose.SignJWT({
     id: payload.id,
@@ -24,7 +23,7 @@ export const generateToken = async (
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('20s')
+    .setExpirationTime('15m')
     .sign(secret);
 
   return token;
@@ -200,11 +199,8 @@ export const validateUpdateProfileBody = async (
   body: UpdateProfileInformation
 ): Promise<[boolean, Response]> => {
   const errors: ValidationErrors = {};
-  if (!body.existing_password || !body.existing_username) {
+  if (!body.existing_password) {
     return [true, ResponseError.custom.badRequest('Missing required fields')];
-  }
-  if (!body.existing_username.trim()) {
-    errors.existing_username = ValidationMessages.USERNAME_REQUIRED;
   }
   if (!body.existing_password.trim()) {
     errors.existing_password = ValidationMessages.PASSWORD_REQUIRED;
@@ -247,7 +243,6 @@ export const validateUpdateProfileBody = async (
 export const extractUserAuthData = (
   req: NextRequest
 ): { userId: string; isAdmin: boolean } => {
-  console.log('Cookies: ' + req.cookies);
   // const userId = req.cookies.get('userId')?.value as string;
   // const isAdmin = req.cookies.get('admin')?.value === 'true';
   const userId = req.headers.get('x-user-id') as string;

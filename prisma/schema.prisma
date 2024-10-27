@@ -27,6 +27,8 @@ model User {
   hosted_properties Property[]
 }
 
+
+
 model Property {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
   name            String

@@ -6,21 +6,14 @@ import { ERROR_badRequest } from '@/utils/helpers/error';
 import ResponseError from '@/models/classes/responseError';
 import { Property } from '@/models/types/Property';
 export async function handler_GetPropertyListByHostId(
-  req: NextRequest,
-  id: string
+  req: NextRequest
 ): Promise<Response> {
-  const hostId = id;
-  console.log('hostId', hostId);
-  if (!hostId) {
-    return ResponseError.default.badRequest_IdRequired();
-  }
   const { userId } = auth(req);
 
   try {
     const properties: Property[] = await PrismaKit.property.getHostedProperties(
       userId
     );
-    console.log('properties', properties);
     return NextResponse.json(properties, { status: 200 });
   } catch (error: unknown) {
     return ERROR_badRequest(error);
@@ -57,7 +50,7 @@ export async function handler_GetPropertyList(
   }
   try {
     const propertyList = await PrismaKit.property.getAll(pageQuery);
-    console.log('propertyList', propertyList);
+
     return NextResponse.json(propertyList, { status: 200 });
   } catch (error: unknown) {
     return ERROR_badRequest(error);
