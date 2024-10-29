@@ -1,1 +1,14 @@
-Gör klart validation för create booking
+gör klart:
+
+1. cancel booking för host endpoint + frontend.
+
+2. cancel booking för user endpoint + frontend.
+
+3. delete property för user + frontend + fixa frontend så att det inte går om man har bookings.
+
+4. delete property för admin + frontend.
+
+5. 
+
+
+

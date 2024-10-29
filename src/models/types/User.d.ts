@@ -11,6 +11,7 @@ export interface User extends PrismaUser {
 export interface UserFrontend
   extends Omit<User, 'password' | 'createdAt' | 'updatedAt'> {
   fullName?: string;
+  deletedAt?: Date;
 }
 
 export interface UserContextInterface {

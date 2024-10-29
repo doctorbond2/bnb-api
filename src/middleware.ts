@@ -11,7 +11,6 @@ export async function middleware(req: NextRequest) {
     'X-Api-Key',
     'x-api-key',
   ];
-
   const origin = req.headers.get('origin');
 
   if (origin && !allowedOrigins.includes(origin)) {
@@ -35,7 +34,10 @@ export async function middleware(req: NextRequest) {
   }
   const response = NextResponse.next();
 
-  if (!req.nextUrl.pathname.startsWith('/api/auth')) {
+  if (
+    !req.nextUrl.pathname.startsWith('/api/auth') &&
+    !req.nextUrl.pathname.startsWith('/api/admin')
+  ) {
     const [hasAuthErrors, authErrors, user] =
       await middleware_authenticate_request(req);
     if (hasAuthErrors) {
@@ -47,6 +49,14 @@ export async function middleware(req: NextRequest) {
     }
     response.headers.set('x-admin' as string, user.admin ? 'true' : 'false');
     response.headers.set('x-user-id' as string, user.id);
+  }
+  if (req.nextUrl.pathname.startsWith('/api/admin')) {
+    const isAdmin = req.cookies.get('admin')?.value;
+    console.log('IS ADMIN: ', isAdmin);
+    if (isAdmin !== 'true') {
+      console.log('Not admin');
+      return ResponseError.custom.unauthorized('Not admin');
+    }
   }
 
   response.headers.set('Access-Control-Allow-Origin', origin || '');

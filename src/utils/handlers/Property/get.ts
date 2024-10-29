@@ -56,3 +56,18 @@ export async function handler_GetPropertyList(
     return ERROR_badRequest(error);
   }
 }
+export async function handler_GetAllProperties(
+  req: NextRequest
+): Promise<Response> {
+  const { searchParams } = new URL(req.url);
+  const pageQuery = getPageQuery(searchParams);
+  if (pageQuery === null) {
+    return ResponseError.default.badRequest();
+  }
+  try {
+    const properties = await PrismaKit.admin.getAllProperties();
+    return NextResponse.json(properties, { status: 200 });
+  } catch (error: unknown) {
+    return ERROR_badRequest(error);
+  }
+}

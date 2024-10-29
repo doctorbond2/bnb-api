@@ -11,12 +11,28 @@ export async function handler_CancelBooking(
   if (!bookingId) {
     return ResponseError.default.badRequest_IdRequired();
   }
-  const { userId, isAdmin } = auth(req);
+  const { userId } = auth(req);
   try {
-    await PrismaKit.booking.delete(bookingId, userId, isAdmin);
+    await PrismaKit.booking.cancel(bookingId, userId);
     return NextResponse.json({ status: 204 });
   } catch (error) {
     console.log('Error canceling booking: ', error);
+    return ResponseError.default.internalServerError();
+  }
+}
+export async function handler_DeleteBooking(
+  req: NextRequest,
+  id: string
+): Promise<Response> {
+  const bookingId = id;
+  if (!bookingId) {
+    return ResponseError.default.badRequest_IdRequired();
+  }
+  try {
+    await PrismaKit.admin.delete_booking(bookingId);
+    return NextResponse.json({ status: 204 });
+  } catch (error) {
+    console.log('Error deleting booking: ', error);
     return ResponseError.default.internalServerError();
   }
 }

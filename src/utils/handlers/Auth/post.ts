@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import ResponseError from '@/models/classes/responseError';
 import { ValidationMessages as M } from '@/models/enums/errorMessages';
+import { cookies } from 'next/headers';
 import { RegisterInformation } from '@/models/types/Auth';
 import { UserFrontend } from '@/models/types/User';
 import { hashPassword, comparePassword } from '@/utils/helpers/password';
@@ -81,6 +82,13 @@ export const LoginUser = async (req: NextRequest): Promise<Response> => {
       secure: true,
       sameSite: 'none',
     });
+    if (user.admin) {
+      response.cookies.set('admin', 'true', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+      });
+    }
 
     return response;
   } catch (err) {
@@ -119,8 +127,10 @@ export const registerUser = async (req: NextRequest): Promise<Response> => {
   }
 };
 export const refreshTokens = async (req: NextRequest): Promise<Response> => {
-  const refreshToken = req.cookies.get('refreshToken')?.value;
-  console.log('REFRESHTOKEN FROM COOKIE: ', refreshToken);
+  let refreshToken = req.cookies.get('refreshToken')?.value;
+  if (!refreshToken) {
+    refreshToken = cookies().get('refreshToken')?.value;
+  }
   if (!refreshToken) {
     return ResponseError.custom.unauthorized('No refresh token found');
   }
@@ -170,7 +180,7 @@ export const handler_logout = async (req: NextRequest): Promise<Response> => {
   if (!req || 5 < 4) {
     console.log('meme');
   }
-  console.log('Logging out...');
+
   const response: NextResponse = NextResponse.json(
     { message: 'Logged out!' },
     { status: 200 }
@@ -193,6 +203,12 @@ export const handler_logout = async (req: NextRequest): Promise<Response> => {
     secure: true,
     sameSite: 'none',
     expires: new Date(0),
+  });
+  response.cookies.set('admin', '', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+    expires: new Date(),
   });
   return response;
 };

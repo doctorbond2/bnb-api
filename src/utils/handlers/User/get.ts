@@ -1,8 +1,12 @@
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-
-export async function getUserList(req: NextRequest): Promise<Response> {
+import db from '@/models/classes/prisma';
+export async function handler_GetUserList(req: NextRequest): Promise<Response> {
   const users = await prisma.user.findMany();
+  return NextResponse.json(users);
+}
+export async function handler_GetAllUsers(): Promise<Response> {
+  const users = await db.admin.getAllUsers();
   return NextResponse.json(users);
 }
 // export async function getUserById(id: number) {

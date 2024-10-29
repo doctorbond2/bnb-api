@@ -21,3 +21,20 @@ export async function handler_DeleteProperty(
     return ERROR_badRequest(error);
   }
 }
+export async function handler_UserDeleteProperty(
+  req: NextRequest,
+  id: string
+): Promise<Response> {
+  const propertyId = id;
+  if (!propertyId) {
+    return ResponseError.default.badRequest_IdRequired();
+  }
+  const { userId } = auth(req);
+
+  try {
+    await PrismaKit.property.delete(propertyId, userId);
+    return NextResponse.json({ status: 204 });
+  } catch (error: unknown) {
+    return ERROR_badRequest(error);
+  }
+}

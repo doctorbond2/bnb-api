@@ -1,4 +1,5 @@
 import * as jose from 'jose';
+import { cookies } from 'next/headers';
 import { RegisterInformation, ValidationErrors } from '@/models/types/Auth';
 import ResponseError from '@/models/classes/responseError';
 import { ValidationMessages } from '@/models/enums/errorMessages';
@@ -51,12 +52,16 @@ export const generateRefreshToken = async (
 export const verifyToken = async (
   req: NextRequest
 ): Promise<TokenPayload | null> => {
-  const cookie_token = req.cookies.get('token')?.value;
-
+  let cookie_token = req.cookies.get('token')?.value;
+  console.log('COOKIE TOKEN: ', cookie_token);
   if (!cookie_token) {
+    cookie_token = cookies().get('token')?.value;
+    console.log('COOKIE TOKEN 2: ', cookie_token);
+  }
+  if (!cookie_token) {
+    console.log('No token found');
     return null;
   }
-
   try {
     const secret = new TextEncoder().encode(SECRET_KEY);
 

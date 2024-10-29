@@ -66,9 +66,18 @@ class PrismaKit {
         (await prisma.property.findMany({
           where: {
             hostId,
+            deletedAt: null,
           },
           include: {
-            bookings: true,
+            bookings: {
+              where: {
+                NOT: {
+                  status: {
+                    in: [STATUS.CANCELLED, STATUS.REJECTED],
+                  },
+                },
+              },
+            },
             images: true,
           },
         })) || []
@@ -80,6 +89,13 @@ class PrismaKit {
         include: populateBookings
           ? {
               bookings: {
+                where: {
+                  NOT: {
+                    status: {
+                      in: [STATUS.CANCELLED, STATUS.REJECTED],
+                    },
+                  },
+                },
                 select: {
                   startDate: true,
                   endDate: true,
@@ -97,6 +113,7 @@ class PrismaKit {
         skip,
         take,
         where: {
+          deletedAt: null,
           available: true,
         },
         orderBy: {
@@ -120,6 +137,10 @@ class PrismaKit {
       };
     },
     update: async (data: Property, propertyId: string) => {
+      if (data.available === false) {
+        data.availableFrom = null;
+        data.availableUntil = null;
+      }
       return await prisma.property.update({
         where: {
           id: propertyId,
@@ -148,9 +169,12 @@ class PrismaKit {
         if (!property) {
           throw new Error(ErrorMessages.PROPERTY_USER_MISMATCH);
         }
-        await prisma.property.delete({
+        await prisma.property.update({
           where: {
             id: property.id,
+          },
+          data: {
+            deletedAt: new Date(),
           },
         });
       } catch (error) {
@@ -180,6 +204,7 @@ class PrismaKit {
       const user = await prisma.user.findUnique({
         where: {
           id,
+          deletedAt: null,
         },
       });
       return user ? true : false;
@@ -195,6 +220,7 @@ class PrismaKit {
               id: bookingId,
             },
           },
+          deletedAt: null,
           hostId: userId,
         },
       });
@@ -208,9 +234,11 @@ class PrismaKit {
         },
       });
     },
+
     getProperties: async (userId: string) => {
       return await prisma.property.findMany({
         where: {
+          deletedAt: null,
           hostId: userId,
         },
       });
@@ -219,6 +247,7 @@ class PrismaKit {
       const user = await prisma.user.findUnique({
         where: {
           username: username.toLowerCase(),
+          deletedAt: null,
         },
       });
       return user ? false : true;
@@ -227,6 +256,7 @@ class PrismaKit {
       const user = await prisma.user.findUnique({
         where: {
           email: email.toLowerCase(),
+          deletedAt: null,
         },
       });
       return user ? false : true;
@@ -241,9 +271,12 @@ class PrismaKit {
         if (bookings.length > 0) {
           throw new Error(ErrorMessages.USER_HAS_BOOKINGS);
         }
-        await prisma.user.delete({
+        await prisma.user.update({
           where: {
             id: userId,
+          },
+          data: {
+            deletedAt: new Date(),
           },
         });
       } catch (error) {
@@ -281,6 +314,7 @@ class PrismaKit {
             gte: endDate,
           },
           bookings: {
+            every: { status: { notIn: [STATUS.CANCELLED, STATUS.REJECTED] } },
             none: {
               startDate: {
                 lte: endDate,
@@ -294,23 +328,49 @@ class PrismaKit {
       });
       return isAvailable;
     },
-    delete: async (bookingId: string, userId: string, isAdmin?: boolean) => {
+    cancel: async (bookingId: string, userId?: string) => {
       try {
-        if (isAdmin) {
-          await this.admin.delete_booking(bookingId);
-        }
-        await prisma.booking.delete({
+        await prisma.booking.update({
           where: {
             id: bookingId,
             userId,
           },
+          data: { status: STATUS.CANCELLED },
+        });
+      } catch (error) {
+        throw error;
+      }
+    },
+    hostCancelBooking: async (bookingId: string, hostId: string) => {
+      try {
+        const booking = await prisma.booking.findUnique({
+          where: {
+            id: bookingId,
+          },
+        });
+        if (!booking) {
+          throw new Error(ErrorMessages.BOOKING_NOT_FOUND);
+        }
+        const property = await prisma.property.findFirst({
+          where: {
+            id: booking.propertyId,
+            hostId,
+          },
+        });
+        if (!property) {
+          throw new Error(ErrorMessages.PROPERTY_USER_MISMATCH);
+        }
+        await prisma.booking.update({
+          where: {
+            id: bookingId,
+          },
+          data: { status: STATUS.CANCELLED },
         });
       } catch (error) {
         throw error;
       }
     },
     getAllUserBookings: async (userId: string) => {
-      console.log('searching for bookings with userId:', userId);
       return await prisma.booking.findMany({
         where: { userId },
         include: {
@@ -330,20 +390,18 @@ class PrismaKit {
     },
     getAllPropertyBookings: async (propertyId: string) => {
       return await prisma.booking.findMany({
-        where: { propertyId },
+        where: {
+          propertyId,
+          status: { notIn: [STATUS.CANCELLED, STATUS.REJECTED] },
+        },
       });
     },
     decideBooking: async (
       bookingId: string,
       hostId: string,
-      decision: boolean,
-      isAdmin: boolean
+      decision: boolean
     ) => {
       try {
-        if (isAdmin) {
-          this.admin.accept_or_reject_booking(bookingId, decision);
-          return;
-        }
         const isHost = await this.user.checkIfHost(hostId, bookingId);
         if (!isHost) {
           throw new Error(ErrorMessages.USER_NOT_HOST);
@@ -364,13 +422,6 @@ class PrismaKit {
           throw new Error(String(err));
         }
       }
-    },
-    getById: async (bookingId: string) => {
-      return await prisma.booking.findUnique({
-        where: {
-          id: bookingId,
-        },
-      });
     },
   };
   static image = {
@@ -406,8 +457,14 @@ class PrismaKit {
           id: propertyId,
         },
       });
-      await prisma.booking.deleteMany({
-        where: { propertyId },
+      await prisma.booking.updateMany({
+        where: {
+          propertyId,
+          NOT: {
+            status: STATUS.REJECTED,
+          },
+        },
+        data: { status: STATUS.CANCELLED },
       });
     },
     delete_booking: async (bookingId: string) => {
@@ -418,23 +475,26 @@ class PrismaKit {
       });
     },
     delete_user: async (userId: string) => {
-      await prisma.user.delete({
-        where: {
-          id: userId,
-        },
-      });
-      await prisma.booking.deleteMany({
-        where: { userId },
-      });
-      await prisma.property.deleteMany({
-        where: { hostId: userId },
+      await prisma.$transaction(async (prisma) => {
+        await prisma.user.delete({
+          where: {
+            id: userId,
+          },
+        });
+
+        await prisma.booking.updateMany({
+          where: { userId },
+          data: { status: STATUS.CANCELLED },
+        });
+
+        await prisma.property.updateMany({
+          where: { hostId: userId },
+          data: { deletedAt: new Date() },
+        });
       });
     },
-    getAllProperties: async (pageQuery: { page: number; pageSize: number }) => {
-      const { page, pageSize } = pageQuery;
-      const skip = (page - 1) * pageSize;
-      const take = pageSize;
-      return await prisma.property.findMany({ skip, take });
+    getAllProperties: async () => {
+      return await prisma.property.findMany();
     },
     getAllHosts: async (pageQuery: { page: number; pageSize: number }) => {
       const { page, pageSize } = pageQuery;
@@ -458,21 +518,25 @@ class PrismaKit {
         },
       });
     },
-    getAllBookings: async (pageQuery: { page: number; pageSize: number }) => {
-      const { page, pageSize } = pageQuery;
-      const skip = (page - 1) * pageSize;
-      const take = pageSize;
-      return await prisma.booking.findMany({
-        skip,
-        take,
-        select: {
-          userId: true,
-          propertyId: true,
-          startDate: true,
-          endDate: true,
+    getAllUsers: async () => {
+      return await prisma.user.findMany();
+    },
+    getAllBookings: async () => {
+      return await prisma.booking.findMany();
+    },
+    getBookingById: async (bookingId: string) => {
+      return await prisma.booking.findUnique({
+        where: {
+          id: bookingId,
         },
       });
     },
+    getPropertyById: async (propertyId: string) =>
+      await prisma.property.findUnique({
+        where: {
+          id: propertyId,
+        },
+      }),
   };
 }
 export default PrismaKit;
