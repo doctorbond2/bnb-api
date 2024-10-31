@@ -23,12 +23,11 @@ export async function handler_createNewProperty(
   }
 
   try {
-    const newProperty: Property = await PrismaKit.property.createProperty(
-      body,
-      userId
-    );
-
-    return NextResponse.json({ newProperty }, { status: 201 });
+    const newProperty = await PrismaKit.property.createProperty(body, userId);
+    if (!newProperty) {
+      return ResponseError.custom.badRequest('Failed to create property');
+    }
+    return NextResponse.json(newProperty, { status: 201 });
   } catch (error: unknown) {
     return ERROR_badRequest(error);
   }

@@ -22,8 +22,7 @@ export async function handler_UpdateProperty(req: NextRequest, id: string) {
 
   try {
     const updatedProperty = await db.property.update(body, propertyId);
-    console.log('updatedProperty:', updatedProperty);
-    return NextResponse.json({ updatedProperty }, { status: 200 });
+    return NextResponse.json(updatedProperty, { status: 200 });
   } catch (error: unknown) {
     return ResponseError.custom.internalServerError((error as Error).message);
   }

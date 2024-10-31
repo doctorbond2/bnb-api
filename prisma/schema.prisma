@@ -44,7 +44,7 @@ model Property {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   images          Image[]
-  deletedAt       DateTime?
+  deletedAt       DateTime? 
 }
 
 model Booking {

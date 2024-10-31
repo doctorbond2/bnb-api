@@ -3,6 +3,7 @@ import ResponseError from '@/models/classes/responseError';
 import { extractUserAuthData as auth } from '@/utils/helpers/auth';
 import { BookingAcception } from '@/models/types/Booking';
 import { ERROR_badRequest } from '@/utils/helpers/error';
+import { generateConfirmationCode } from '@/utils/helpers/password';
 import db from '@/models/classes/prisma';
 
 export async function handler_AcceptRejectBooking(
@@ -22,8 +23,14 @@ export async function handler_AcceptRejectBooking(
   if (typeof body.decision !== 'boolean') {
     return ResponseError.default.badRequest();
   }
+  const confirmationCode = generateConfirmationCode();
   try {
-    await db.booking.decideBooking(bookingId, userId, body.decision);
+    await db.booking.decideBooking(
+      bookingId,
+      userId,
+      body.decision,
+      confirmationCode
+    );
     return NextResponse.json({ status: 204 });
   } catch (error: unknown) {
     if (error instanceof Error) {

@@ -21,7 +21,6 @@ export interface NewBookingData {
 
 export interface NewBooking
   extends Omit<NewBookingData, 'createdAt' | 'updatedAt' | 'id'> {
-  confirmationCode: string;
   userId: string;
   status: string;
   comments?: string;

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ResponseError from '@/models/classes/responseError';
-import { generateConfirmationCode } from '@/utils/helpers/password';
 import PrismaKit from '@/models/classes/prisma';
 import { NewBooking, NewBookingData } from '@/models/types/Booking';
 import { extractUserAuthData as auth } from '@/utils/helpers/auth';
@@ -21,10 +20,9 @@ export async function handler_CreateBooking(
         'Property is not available for the selected dates'
       );
     }
-    console.log('You passed the check for availability');
+
     const booking: NewBooking = {
       ...body,
-      confirmationCode: generateConfirmationCode(),
       status: STATUS.PENDING,
       userId,
     };

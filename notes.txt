@@ -1,5 +1,9 @@
 gör klart:
 
+FÖRST: specialsida för att skapa admins
+
+KOM IHÅG: Gamla dokument har inte nya fields för null checks
+
 1. cancel booking för host endpoint + frontend.
 
 2. cancel booking för user endpoint + frontend.

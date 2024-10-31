@@ -17,9 +17,10 @@ class PrismaKit {
       ) {
         data.available = false;
       }
-      const imageUrls = data.imageUrls || null;
 
+      const imageUrls = data.imageUrls || null;
       delete data.imageUrls;
+
       const isUser = await this.user.checkId(hostId);
       if (!isUser) {
         throw new Error('User not found');
@@ -31,6 +32,7 @@ class PrismaKit {
           city: data.city,
           country: data.country,
           address: data.address,
+          deletedAt: null,
         },
       });
       if (existingProperty) {
@@ -42,8 +44,10 @@ class PrismaKit {
           data: {
             ...data,
             hostId,
+            deletedAt: null,
           },
         });
+
         if (imageUrls && imageUrls.length > 0) {
           const dbImages: NewImage[] = imageUrls.map(
             (imageUrl: string, index: number) => ({
@@ -57,7 +61,17 @@ class PrismaKit {
 
           await prisma.image.createMany({ data: dbImages });
         }
-        return newDbEntry;
+        return await prisma.property.findUnique({
+          where: { id: newDbEntry.id },
+          include: {
+            images: true,
+            bookings: {
+              where: {
+                NOT: { status: { in: [STATUS.CANCELLED, STATUS.REJECTED] } },
+              },
+            },
+          },
+        });
       });
     },
 
@@ -66,7 +80,6 @@ class PrismaKit {
         (await prisma.property.findMany({
           where: {
             hostId,
-            deletedAt: null,
           },
           include: {
             bookings: {
@@ -141,19 +154,26 @@ class PrismaKit {
         data.availableFrom = null;
         data.availableUntil = null;
       }
-      return await prisma.property.update({
+      const newDbEntry = await prisma.property.update({
         where: {
           id: propertyId,
         },
         data,
       });
+      return await prisma.property.findUnique({
+        where: { id: newDbEntry.id },
+        include: {
+          images: true,
+          bookings: {
+            where: {
+              NOT: { status: { in: [STATUS.CANCELLED, STATUS.REJECTED] } },
+            },
+          },
+        },
+      });
     },
-    delete: async (propertyId: string, userId: string, isAdmin?: boolean) => {
+    delete: async (propertyId: string, userId: string) => {
       try {
-        if (isAdmin) {
-          await this.admin.delete_property(propertyId);
-          return;
-        }
         const propertyBookings = await this.booking.getAllPropertyBookings(
           propertyId
         );
@@ -193,6 +213,7 @@ class PrismaKit {
           firstName: body.firstName.toLowerCase(),
           lastName: body.lastName.toLowerCase(),
           admin: !!body.admin,
+          deletedAt: null,
         },
       });
       if (!user) {
@@ -204,7 +225,6 @@ class PrismaKit {
       const user = await prisma.user.findUnique({
         where: {
           id,
-          deletedAt: null,
         },
       });
       return user ? true : false;
@@ -291,7 +311,6 @@ class PrismaKit {
           customer: JSON.stringify(data.customer),
           startDate: data.startDate,
           endDate: data.endDate,
-          confirmationCode: data.confirmationCode,
           status: data.status,
           propertyId: data.propertyId,
           userId: data.userId,
@@ -314,8 +333,8 @@ class PrismaKit {
             gte: endDate,
           },
           bookings: {
-            every: { status: { notIn: [STATUS.CANCELLED, STATUS.REJECTED] } },
             none: {
+              status: { notIn: [STATUS.CANCELLED, STATUS.REJECTED] },
               startDate: {
                 lte: endDate,
               },
@@ -326,6 +345,7 @@ class PrismaKit {
           },
         },
       });
+
       return isAvailable;
     },
     cancel: async (bookingId: string, userId?: string) => {
@@ -399,21 +419,24 @@ class PrismaKit {
     decideBooking: async (
       bookingId: string,
       hostId: string,
-      decision: boolean
+      decision: boolean,
+      confirmationCode: string
     ) => {
       try {
         const isHost = await this.user.checkIfHost(hostId, bookingId);
         if (!isHost) {
           throw new Error(ErrorMessages.USER_NOT_HOST);
         }
-        const statusUpdate = decision ? STATUS.ACCEPTED : STATUS.REJECTED;
+        const data = {
+          status: decision ? STATUS.ACCEPTED : STATUS.REJECTED,
+          confirmationCode: decision ? confirmationCode : undefined,
+        };
+
         await prisma.booking.update({
           where: {
             id: bookingId,
           },
-          data: {
-            status: statusUpdate,
-          },
+          data,
         });
       } catch (err) {
         if (err instanceof Error) {
@@ -452,19 +475,26 @@ class PrismaKit {
       });
     },
     delete_property: async (propertyId: string) => {
-      await prisma.property.delete({
-        where: {
-          id: propertyId,
-        },
-      });
-      await prisma.booking.updateMany({
-        where: {
-          propertyId,
-          NOT: {
-            status: STATUS.REJECTED,
+      await prisma.$transaction(async (prisma) => {
+        await prisma.property.delete({
+          where: {
+            id: propertyId,
           },
-        },
-        data: { status: STATUS.CANCELLED },
+        });
+        await prisma.image.deleteMany({
+          where: {
+            propertyId,
+          },
+        });
+        await prisma.booking.updateMany({
+          where: {
+            propertyId,
+            NOT: {
+              status: STATUS.REJECTED,
+            },
+          },
+          data: { status: STATUS.CANCELLED },
+        });
       });
     },
     delete_booking: async (bookingId: string) => {
@@ -494,7 +524,7 @@ class PrismaKit {
       });
     },
     getAllProperties: async () => {
-      return await prisma.property.findMany();
+      return await prisma.property.findMany({ include: { bookings: true } });
     },
     getAllHosts: async (pageQuery: { page: number; pageSize: number }) => {
       const { page, pageSize } = pageQuery;
@@ -537,6 +567,23 @@ class PrismaKit {
           id: propertyId,
         },
       }),
+    createAdmin: async (body: RegisterInformation, hashedPassword: string) => {
+      const user = await prisma.user.create({
+        data: {
+          email: body.email.toLowerCase(),
+          username: body.username.toLowerCase(),
+          password: hashedPassword,
+          firstName: body.firstName.toLowerCase(),
+          lastName: body.lastName.toLowerCase(),
+          admin: true,
+          deletedAt: null,
+        },
+      });
+      if (!user) {
+        throw new Error('User not created');
+      }
+      return user;
+    },
   };
 }
 export default PrismaKit;
