@@ -24,6 +24,7 @@ export async function handler_AcceptRejectBooking(
     return ResponseError.default.badRequest();
   }
   const confirmationCode = generateConfirmationCode();
+
   try {
     await db.booking.decideBooking(
       bookingId,

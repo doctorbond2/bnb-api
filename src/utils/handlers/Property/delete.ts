@@ -12,10 +12,8 @@ export async function handler_DeleteProperty(
   if (!propertyId) {
     return ResponseError.default.badRequest_IdRequired();
   }
-  const { userId } = auth(req);
-
   try {
-    await PrismaKit.property.delete(propertyId, userId);
+    await PrismaKit.admin.delete_property(propertyId);
     return NextResponse.json({ status: 204 });
   } catch (error: unknown) {
     return ERROR_badRequest(error);

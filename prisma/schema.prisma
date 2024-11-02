@@ -61,7 +61,7 @@ model Booking {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   status           String
-  total            Int?
+  price_total      Int?
 }
 
 model Image {

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ResponseError from '@/models/classes/responseError';
 import PrismaKit from '@/models/classes/prisma';
-import { Property } from '@/models/types/Property';
 import { NewPropertyData } from '@/models/types/Property';
 import { ERROR_badRequest } from '@/utils/helpers/error';
 import { extractUserAuthData as auth } from '@/utils/helpers/auth';

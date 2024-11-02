@@ -1,4 +1,4 @@
-import { handler_DeleteProperty as deleteProperty } from '@/utils/handlers/Property/delete';
+import { handler_UserDeleteProperty as deleteProperty } from '@/utils/handlers/Property/delete';
 import { NextRequest } from 'next/server';
 import { handler_UpdateProperty } from '@/utils/handlers/Property/put';
 export async function DELETE(

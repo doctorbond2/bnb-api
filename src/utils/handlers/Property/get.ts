@@ -27,14 +27,18 @@ export async function handler_GetPropertyById(
   if (!propertyId) {
     return ResponseError.default.badRequest_IdRequired();
   }
-
-  const getParams = new URL(req.url).searchParams;
-  const populateBookings = getParams.get('populateBookings') === 'true';
   try {
-    const property = await PrismaKit.property.getById(
-      propertyId,
-      populateBookings
-    );
+    const property = await PrismaKit.property.getById(propertyId);
+    return NextResponse.json(property, { status: 200 });
+  } catch (error: unknown) {
+    return ERROR_badRequest(error);
+  }
+}
+export async function handler_GetPropertyForBooking(
+  id: string
+): Promise<Response> {
+  try {
+    const property = await PrismaKit.property.getForBooking(id);
     return NextResponse.json(property, { status: 200 });
   } catch (error: unknown) {
     return ERROR_badRequest(error);

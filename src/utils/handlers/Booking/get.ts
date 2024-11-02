@@ -26,9 +26,20 @@ export async function handler_GetBookingById(
     return ResponseError.default.badRequest_IdRequired();
   }
   const bookingId = id;
+  const { userId } = auth(req);
+  if (!userId) {
+    return ResponseError.default.unauthorized();
+  }
   try {
-    const booking = await db.admin.getBookingById(bookingId);
-    return NextResponse.json({ booking }, { status: 200 });
+    const isRelated = await db.booking.isBookingRelatedToUser(
+      bookingId,
+      userId
+    );
+    if (!isRelated) {
+      return ResponseError.default.forbidden();
+    }
+    const booking = await db.booking.getById(bookingId);
+    return NextResponse.json(booking, { status: 200 });
   } catch (err) {
     return ERROR_internalServerError(err);
   }

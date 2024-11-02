@@ -6,6 +6,7 @@ import { RegisterInformation } from '../types/Auth';
 import { BookingStatusEnum as STATUS } from '../enums/general';
 import { NewImage } from '../types/Image';
 import { NewPropertyData } from '../types/Property';
+import { calculateTotalCostOfStay as calcTotal } from '@/utils/helpers/math';
 class PrismaKit {
   contructor() {}
   static property = {
@@ -96,26 +97,45 @@ class PrismaKit {
         })) || []
       );
     },
-    getById: async (propertyId: string, populateBookings: boolean) => {
+    getById: async (propertyId: string) => {
       return await prisma.property.findUnique({
         where: { id: propertyId },
-        include: populateBookings
-          ? {
-              bookings: {
-                where: {
-                  NOT: {
-                    status: {
-                      in: [STATUS.CANCELLED, STATUS.REJECTED],
-                    },
-                  },
-                },
-                select: {
-                  startDate: true,
-                  endDate: true,
-                },
-              },
-            }
-          : undefined,
+        include: {
+          images: true,
+          host: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+        },
+      });
+    },
+    getForBooking: async (propertyId: string) => {
+      return await prisma.property.findUnique({
+        where: { id: propertyId },
+        include: {
+          bookings: {
+            where: {
+              NOT: { status: { in: [STATUS.CANCELLED, STATUS.REJECTED] } },
+            },
+            select: {
+              id: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+          host: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+        },
       });
     },
     getAll: async (pageQuery: { page: number; pageSize: number }) => {
@@ -136,6 +156,7 @@ class PrismaKit {
           images: true,
           host: {
             select: {
+              id: true,
               firstName: true,
               lastName: true,
             },
@@ -172,7 +193,18 @@ class PrismaKit {
         },
       });
     },
+    isHost: async (propertyId: string, userId: string) => {
+      const property = await prisma.property.findFirst({
+        where: {
+          id: propertyId,
+          hostId: userId,
+          deletedAt: null,
+        },
+      });
+      return !!property;
+    },
     delete: async (propertyId: string, userId: string) => {
+      console.log('testt', propertyId, userId);
       try {
         const propertyBookings = await this.booking.getAllPropertyBookings(
           propertyId
@@ -183,10 +215,11 @@ class PrismaKit {
         const property = await prisma.property.findUnique({
           where: {
             id: propertyId,
-            hostId: userId,
           },
         });
-        if (!property) {
+        console.log('property', property);
+
+        if (!property || property.hostId !== userId) {
           throw new Error(ErrorMessages.PROPERTY_USER_MISMATCH);
         }
         await prisma.property.update({
@@ -315,6 +348,19 @@ class PrismaKit {
           propertyId: data.propertyId,
           userId: data.userId,
         },
+        include: {
+          property: {
+            select: {
+              name: true,
+              host: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                },
+              },
+            },
+          },
+        },
       });
     },
     checkBookingAvailability: async (booking: NewBookingData) => {
@@ -350,10 +396,23 @@ class PrismaKit {
     },
     cancel: async (bookingId: string, userId?: string) => {
       try {
-        await prisma.booking.update({
+        return await prisma.booking.update({
           where: {
             id: bookingId,
             userId,
+          },
+          include: {
+            property: {
+              select: {
+                name: true,
+                host: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                  },
+                },
+              },
+            },
           },
           data: { status: STATUS.CANCELLED },
         });
@@ -390,6 +449,23 @@ class PrismaKit {
         throw error;
       }
     },
+    isBookingRelatedToUser: async (bookingId: string, userId: string) => {
+      const isRelated = await prisma.booking.findFirst({
+        where: {
+          id: bookingId,
+          OR: [
+            { userId },
+            {
+              property: {
+                hostId: userId,
+              },
+            },
+          ],
+        },
+      });
+
+      return !!isRelated;
+    },
     getAllUserBookings: async (userId: string) => {
       return await prisma.booking.findMany({
         where: { userId },
@@ -397,6 +473,27 @@ class PrismaKit {
           property: {
             select: {
               name: true,
+              host: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    },
+    getById: async (bookingId: string) => {
+      return await prisma.booking.findUnique({
+        where: {
+          id: bookingId,
+        },
+        include: {
+          property: {
+            select: {
+              name: true,
+              price_per_night: true,
               host: {
                 select: {
                   firstName: true,
@@ -422,29 +519,46 @@ class PrismaKit {
       decision: boolean,
       confirmationCode: string
     ) => {
-      try {
-        const isHost = await this.user.checkIfHost(hostId, bookingId);
-        if (!isHost) {
-          throw new Error(ErrorMessages.USER_NOT_HOST);
-        }
-        const data = {
-          status: decision ? STATUS.ACCEPTED : STATUS.REJECTED,
-          confirmationCode: decision ? confirmationCode : undefined,
-        };
+      await prisma.$transaction(async (prisma) => {
+        try {
+          const isHost = await this.user.checkIfHost(hostId, bookingId);
+          if (!isHost) {
+            throw new Error(ErrorMessages.USER_NOT_HOST);
+          }
+          const dbPropertyEntry = await prisma.booking.findUnique({
+            where: {
+              id: bookingId,
+            },
+            include: { property: { select: { price_per_night: true } } },
+          });
+          if (!dbPropertyEntry) {
+            throw new Error(ErrorMessages.BOOKING_NOT_FOUND);
+          }
+          const totalCost = calcTotal(
+            dbPropertyEntry.startDate,
+            dbPropertyEntry.endDate,
+            dbPropertyEntry.property.price_per_night
+          );
+          const data = {
+            status: decision ? STATUS.ACCEPTED : STATUS.REJECTED,
+            confirmationCode: decision ? confirmationCode : undefined,
+            price_total: decision ? totalCost : undefined,
+          };
+          return await prisma.booking.update({
+            where: {
+              id: bookingId,
+            },
 
-        await prisma.booking.update({
-          where: {
-            id: bookingId,
-          },
-          data,
-        });
-      } catch (err) {
-        if (err instanceof Error) {
-          throw new Error(err.message);
-        } else {
-          throw new Error(String(err));
+            data,
+          });
+        } catch (err) {
+          if (err instanceof Error) {
+            throw new Error(err.message);
+          } else {
+            throw new Error(String(err));
+          }
         }
-      }
+      });
     },
   };
   static image = {
@@ -471,6 +585,16 @@ class PrismaKit {
         },
         data: {
           status: statusUpdate,
+        },
+      });
+    },
+    cancel_booking: async (bookingId: string) => {
+      return await prisma.booking.update({
+        where: {
+          id: bookingId,
+        },
+        data: {
+          status: STATUS.CANCELLED,
         },
       });
     },

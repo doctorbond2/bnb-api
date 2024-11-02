@@ -10,14 +10,20 @@ export async function handler_CreateBooking(
   const body: NewBookingData = await req.json();
 
   try {
-    const isAvailable = await PrismaKit.booking.checkBookingAvailability(body);
     const { userId } = auth(req);
     if (!userId) {
       return ResponseError.custom.badRequest('User not found');
     }
+    const isAvailable = await PrismaKit.booking.checkBookingAvailability(body);
     if (!isAvailable) {
       return ResponseError.custom.badRequest(
         'Property is not available for the selected dates'
+      );
+    }
+    const isHost = await PrismaKit.property.isHost(userId, body.propertyId);
+    if (isHost) {
+      return ResponseError.custom.badRequest(
+        'Host cannot book their own property'
       );
     }
 
