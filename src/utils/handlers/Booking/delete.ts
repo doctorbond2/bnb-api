@@ -52,3 +52,18 @@ export async function handler_adminCancelBooking(
     return ResponseError.default.internalServerError();
   }
 }
+export async function handler_AdminDeleteManyBookings(
+  req: NextRequest
+): Promise<Response> {
+  const { bookingIds } = await req.json();
+  if (!bookingIds) {
+    return ResponseError.default.badRequest_IdRequired();
+  }
+  try {
+    await PrismaKit.admin.delete_many_bookings(bookingIds);
+    return NextResponse.json({ status: 204 });
+  } catch (error) {
+    console.log('Error deleting bookings: ', error);
+    return ResponseError.default.internalServerError();
+  }
+}

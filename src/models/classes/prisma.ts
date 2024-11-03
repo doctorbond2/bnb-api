@@ -204,7 +204,6 @@ class PrismaKit {
       return !!property;
     },
     delete: async (propertyId: string, userId: string) => {
-      console.log('testt', propertyId, userId);
       try {
         const propertyBookings = await this.booking.getAllPropertyBookings(
           propertyId
@@ -217,8 +216,6 @@ class PrismaKit {
             id: propertyId,
           },
         });
-        console.log('property', property);
-
         if (!property || property.hostId !== userId) {
           throw new Error(ErrorMessages.PROPERTY_USER_MISMATCH);
         }
@@ -320,7 +317,12 @@ class PrismaKit {
         if (properties.length > 0) {
           throw new Error(ErrorMessages.USER_HAS_PROPERTIES);
         }
-        const bookings = await this.user.getBookings(userId);
+        const bookings = await prisma.booking.findMany({
+          where: {
+            userId,
+            status: { notIn: [STATUS.CANCELLED, STATUS.REJECTED] },
+          },
+        });
         if (bookings.length > 0) {
           throw new Error(ErrorMessages.USER_HAS_BOOKINGS);
         }
@@ -599,25 +601,28 @@ class PrismaKit {
       });
     },
     delete_property: async (propertyId: string) => {
+      await prisma.property.delete({
+        where: {
+          id: propertyId,
+        },
+      });
+    },
+    soft_delete_property: async (propertyId: string) => {
       await prisma.$transaction(async (prisma) => {
-        await prisma.property.delete({
-          where: {
-            id: propertyId,
-          },
-        });
-        await prisma.image.deleteMany({
-          where: {
-            propertyId,
-          },
-        });
         await prisma.booking.updateMany({
           where: {
             propertyId,
-            NOT: {
-              status: STATUS.REJECTED,
-            },
+            status: { notIn: [STATUS.CANCELLED, STATUS.REJECTED] },
           },
           data: { status: STATUS.CANCELLED },
+        });
+        await prisma.property.update({
+          where: {
+            id: propertyId,
+          },
+          data: {
+            deletedAt: new Date(),
+          },
         });
       });
     },
@@ -628,25 +633,63 @@ class PrismaKit {
         },
       });
     },
-    delete_user: async (userId: string) => {
+    delete_many_bookings: async (bookingIds: string[]) => {
+      await prisma.booking.deleteMany({
+        where: {
+          id: {
+            in: bookingIds,
+          },
+        },
+      });
+    },
+    soft_delete_user: async (userId: string) => {
       await prisma.$transaction(async (prisma) => {
-        await prisma.user.delete({
+        await prisma.user.update({
           where: {
             id: userId,
           },
+          data: {
+            deletedAt: new Date(),
+          },
         });
-
-        await prisma.booking.updateMany({
-          where: { userId },
-          data: { status: STATUS.CANCELLED },
+        const properties = await prisma.property.findMany({
+          where: { hostId: userId },
+          select: { id: true },
         });
+        if (properties.length > 0) {
+          const propertyIds = properties.map((property) => property.id);
 
+          await prisma.booking.updateMany({
+            where: {
+              propertyId: { in: propertyIds },
+              status: { notIn: [STATUS.CANCELLED, STATUS.REJECTED] },
+            },
+            data: { status: STATUS.CANCELLED },
+          });
+        }
         await prisma.property.updateMany({
           where: { hostId: userId },
           data: { deletedAt: new Date() },
         });
       });
     },
+    delete_user: async (userId: string) => {
+      await prisma.user.delete({
+        where: {
+          id: userId,
+        },
+      });
+    },
+    delete_many_users: async (userIds: string[]) => {
+      await prisma.user.deleteMany({
+        where: {
+          id: {
+            in: userIds,
+          },
+        },
+      });
+    },
+
     getAllProperties: async () => {
       return await prisma.property.findMany({ include: { bookings: true } });
     },

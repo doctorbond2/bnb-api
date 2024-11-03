@@ -38,7 +38,7 @@ model Property {
   availableFrom   DateTime?
   availableUntil  DateTime?
   available       Boolean   @default(true)
-  host            User      @relation(fields: [hostId], references: [id])
+  host            User      @relation(fields: [hostId], references: [id], onDelete:Cascade)
   hostId          String    @db.ObjectId
   bookings        Booking[]
   createdAt       DateTime  @default(now())
@@ -50,9 +50,9 @@ model Property {
 model Booking {
   id               String   @id @default(auto()) @map("_id") @db.ObjectId
   customer         Json
-  created_by       User     @relation(fields: [userId], references: [id])
+  created_by       User     @relation(fields: [userId], references: [id], onDelete:Cascade)
   userId           String   @db.ObjectId
-  property         Property @relation(fields: [propertyId], references: [id])
+  property         Property @relation(fields: [propertyId], references: [id],onDelete:Cascade)
   propertyId       String   @db.ObjectId
   confirmationCode String?  @unique
   startDate        DateTime
@@ -68,7 +68,7 @@ model Image {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   url        String
   alt        String?
-  property   Property @relation(fields: [propertyId], references: [id])
+  property   Property @relation(fields: [propertyId], references: [id],onDelete:Cascade)
   propertyId String   @db.ObjectId
   Booking    Booking? @relation(fields: [bookingId], references: [id])
   bookingId  String?  @db.ObjectId

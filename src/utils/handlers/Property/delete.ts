@@ -36,3 +36,18 @@ export async function handler_UserDeleteProperty(
     return ERROR_badRequest(error);
   }
 }
+export async function handler_AdminSoftDeleteProperty(
+  req: NextRequest,
+  id: string
+): Promise<Response> {
+  const propertyId = id;
+  if (!propertyId) {
+    return ResponseError.default.badRequest_IdRequired();
+  }
+  try {
+    await PrismaKit.admin.soft_delete_property(propertyId);
+    return NextResponse.json({ status: 204 });
+  } catch (error: unknown) {
+    return ERROR_badRequest(error);
+  }
+}
