@@ -1,1 +1,4 @@
-// Implement get all listed hosts
+import { NextResponse } from 'next/server';
+export async function GET() {
+  return NextResponse.json({ message: 'Returned all properties' });
+}
