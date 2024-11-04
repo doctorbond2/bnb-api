@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { Property } from '../types/Property';
+import { UpdatePropertyFormData } from '../types/Property';
 import { ErrorMessages } from '../enums/errorMessages';
 import { NewBooking, NewBookingData } from '../types/Booking';
 import { RegisterInformation } from '../types/Auth';
@@ -154,6 +154,7 @@ class PrismaKit {
         },
         include: {
           images: true,
+
           host: {
             select: {
               id: true,
@@ -170,27 +171,49 @@ class PrismaKit {
         data: properties,
       };
     },
-    update: async (data: Property, propertyId: string) => {
-      if (data.available === false) {
-        data.availableFrom = null;
-        data.availableUntil = null;
-      }
-      const newDbEntry = await prisma.property.update({
-        where: {
-          id: propertyId,
-        },
-        data,
-      });
-      return await prisma.property.findUnique({
-        where: { id: newDbEntry.id },
-        include: {
-          images: true,
-          bookings: {
+    update: async (data: UpdatePropertyFormData, propertyId: string) => {
+      await prisma.$transaction(async (prisma) => {
+        if (data.available === false) {
+          data.availableFrom = null;
+          data.availableUntil = null;
+        }
+        const imageUrls = data.imageUrls || null;
+        delete data.imageUrls;
+        const newDbEntry = await prisma.property.update({
+          where: {
+            id: propertyId,
+          },
+          data,
+        });
+        if (imageUrls && imageUrls.length > 0) {
+          await prisma.image.deleteMany({
             where: {
-              NOT: { status: { in: [STATUS.CANCELLED, STATUS.REJECTED] } },
+              propertyId,
+            },
+          });
+          const dbImages: NewImage[] = imageUrls.map(
+            (imageUrl: string, index: number) => ({
+              url: imageUrl,
+              alt: `property-image-${index}-${
+                newDbEntry.id
+              }-${new Date().getTime()}`,
+              propertyId: newDbEntry.id,
+            })
+          );
+          await prisma.image.createMany({ data: dbImages });
+        }
+
+        return await prisma.property.findUnique({
+          where: { id: newDbEntry.id },
+          include: {
+            images: true,
+            bookings: {
+              where: {
+                NOT: { status: { in: [STATUS.CANCELLED, STATUS.REJECTED] } },
+              },
             },
           },
-        },
+        });
       });
     },
     isHost: async (propertyId: string, userId: string) => {

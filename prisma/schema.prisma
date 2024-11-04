@@ -44,6 +44,7 @@ model Property {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   images          Image[]
+  description     String
   deletedAt       DateTime? 
 }
 
