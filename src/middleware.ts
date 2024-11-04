@@ -3,7 +3,10 @@ import { middleware_authenticate_request } from './utils/middleware/auth';
 import ResponseError from './models/classes/responseError';
 
 export async function middleware(req: NextRequest) {
-  const allowedOrigins = ['http://localhost:8080'];
+  const allowedOrigins = [
+    'http://localhost:8080',
+    'https://bnb-frontend-delta.vercel.app',
+  ];
   const allowedMethods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'];
   const allowedHeaders = [
     'Authorization',
@@ -52,9 +55,7 @@ export async function middleware(req: NextRequest) {
   }
   if (req.nextUrl.pathname.startsWith('/api/admin')) {
     const isAdmin = req.cookies.get('admin')?.value;
-    console.log('IS ADMIN: ', isAdmin);
     if (isAdmin !== 'true') {
-      console.log('Not admin');
       return ResponseError.custom.unauthorized('Not admin');
     }
   }

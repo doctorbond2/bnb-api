@@ -38,6 +38,7 @@ export async function handler_GetBookingById(
     if (!isRelated) {
       return ResponseError.default.forbidden();
     }
+
     const booking = await db.booking.getById(bookingId);
     return NextResponse.json(booking, { status: 200 });
   } catch (err) {
