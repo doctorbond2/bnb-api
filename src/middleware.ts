@@ -86,5 +86,6 @@ export const config = {
     '/api/admin/:path*',
     '/api/protected/:path*',
     '/api/auth/:path*',
+    '/api/search/:path*',
   ],
 };
