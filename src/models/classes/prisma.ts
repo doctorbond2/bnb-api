@@ -172,12 +172,13 @@ class PrismaKit {
       };
     },
     update: async (data: UpdatePropertyFormData, propertyId: string) => {
-      await prisma.$transaction(async (prisma) => {
+      return await prisma.$transaction(async (prisma) => {
         if (data.available === false) {
           data.availableFrom = null;
           data.availableUntil = null;
         }
-        const imageUrls = data.imageUrls || null;
+
+        const imageUrls = data.imageUrls || [];
         delete data.imageUrls;
         const newDbEntry = await prisma.property.update({
           where: {
@@ -185,21 +186,23 @@ class PrismaKit {
           },
           data,
         });
-        if (imageUrls && imageUrls.length > 0) {
-          await prisma.image.deleteMany({
-            where: {
-              propertyId,
-            },
-          });
-          const dbImages: NewImage[] = imageUrls.map(
-            (imageUrl: string, index: number) => ({
-              url: imageUrl,
-              alt: `property-image-${index}-${
-                newDbEntry.id
-              }-${new Date().getTime()}`,
-              propertyId: newDbEntry.id,
-            })
-          );
+
+        console.log('test');
+        console.log('propertyId', propertyId);
+        await prisma.image.deleteMany({
+          where: {
+            propertyId,
+          },
+        });
+
+        const dbImages: NewImage[] = imageUrls.map(
+          (imageUrl: string, index: number) => ({
+            url: imageUrl,
+            alt: `property-image-${index}-${newDbEntry.id}-${Date.now()}`,
+            propertyId: newDbEntry.id,
+          })
+        );
+        if (dbImages.length > 0) {
           await prisma.image.createMany({ data: dbImages });
         }
 
