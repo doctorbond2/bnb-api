@@ -15,6 +15,7 @@ import {
 import { User } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import PrismaKit from '@/models/classes/prisma';
+const ONE_DAY = 1000 * 60 * 60 * 24;
 export const LoginUser = async (req: NextRequest): Promise<Response> => {
   const body: User = await req.json();
   const [hasErrors, errors] = validateLoginBody(body);
@@ -70,23 +71,27 @@ export const LoginUser = async (req: NextRequest): Promise<Response> => {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
+      maxAge: ONE_DAY,
     });
     console.log('API KEY: ', process.env.API_KEY);
     response.cookies.set('token', token, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
+      maxAge: ONE_DAY,
     });
     response.cookies.set('refreshToken', refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
+      maxAge: ONE_DAY,
     });
     if (user.admin) {
       response.cookies.set('admin', 'true', {
         httpOnly: true,
         secure: true,
         sameSite: 'none',
+        maxAge: ONE_DAY,
       });
     }
 
@@ -159,11 +164,13 @@ export const refreshTokens = async (req: NextRequest): Promise<Response> => {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
+      maxAge: ONE_DAY,
     });
     response.cookies.set('refreshToken', newRefreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
+      maxAge: ONE_DAY,
     });
 
     return response;
