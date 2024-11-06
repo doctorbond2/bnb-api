@@ -154,7 +154,6 @@ class PrismaKit {
         },
         include: {
           images: true,
-
           host: {
             select: {
               id: true,
