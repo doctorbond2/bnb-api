@@ -1,18 +1,6 @@
 gör klart:
 
-FÖRST: specialsida för att skapa admins
-
-KOM IHÅG: Gamla dokument har inte nya fields för null checks
-
-1. cancel booking för host endpoint + frontend.
-
-2. cancel booking för user endpoint + frontend.
-
-3. delete property för user + frontend + fixa frontend så att det inte går om man har bookings.
-
-4. delete property för admin + frontend.
-
-5. 
 
 
-6. (större grej. Gör efterr inlämning om tid finns): Implementera cancelledAt, rejectedAt för bookings och sortera gets därefter
+ delete property för user + frontend + fixa frontend så att det inte går om man har bookings.
+
