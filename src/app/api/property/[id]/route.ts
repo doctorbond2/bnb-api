@@ -8,6 +8,7 @@ export async function GET(
   const propertyId = params.id;
   const getParams = new URL(req.url).searchParams;
   const populateBookings = getParams.get('populateBookings') === 'true';
+
   if (populateBookings) {
     return handler_GetPropertyForBooking(propertyId);
   }

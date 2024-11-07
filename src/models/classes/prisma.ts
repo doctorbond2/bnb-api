@@ -418,8 +418,7 @@ class PrismaKit {
           },
         },
       });
-
-      return isAvailable;
+      return isAvailable !== null;
     },
     cancel: async (bookingId: string, userId?: string) => {
       try {
@@ -716,7 +715,9 @@ class PrismaKit {
     },
 
     getAllProperties: async () => {
-      return await prisma.property.findMany({ include: { bookings: true } });
+      return await prisma.property.findMany({
+        include: { bookings: true, images: true },
+      });
     },
     getAllHosts: async (pageQuery: { page: number; pageSize: number }) => {
       const { page, pageSize } = pageQuery;

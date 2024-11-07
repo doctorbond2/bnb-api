@@ -39,6 +39,7 @@ export async function handler_GetPropertyForBooking(
 ): Promise<Response> {
   try {
     const property = await PrismaKit.property.getForBooking(id);
+    console.log(property, 'property');
     return NextResponse.json(property, { status: 200 });
   } catch (error: unknown) {
     return ERROR_badRequest(error);
