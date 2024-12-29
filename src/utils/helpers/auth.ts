@@ -1,5 +1,5 @@
 import * as jose from 'jose';
-import { cookies } from 'next/headers';
+// import { cookies } from 'next/headers';
 import { RegisterInformation, ValidationErrors } from '@/models/types/Auth';
 import ResponseError from '@/models/classes/responseError';
 import { ValidationMessages } from '@/models/enums/errorMessages';
@@ -52,13 +52,19 @@ export const generateRefreshToken = async (
 export const verifyToken = async (
   req: NextRequest
 ): Promise<TokenPayload | null> => {
-  let cookie_token = req.cookies.get('token')?.value;
-  console.log('COOKIE TOKEN: ', cookie_token);
-  if (!cookie_token) {
-    cookie_token = cookies().get('token')?.value;
-    console.log('COOKIE TOKEN 2: ', cookie_token);
-  }
-  if (!cookie_token) {
+  // let cookie_token = req.cookies.get('token')?.value;
+
+  // if (!cookie_token) {
+  //   cookie_token = cookies().get('token')?.value;
+  //   console.log('COOKIE TOKEN 2: ', cookie_token);
+  // }
+  // if (!cookie_token) {
+  //   console.log('No token found');
+  //   return null;
+  // }
+
+  const token = req.headers.get('authorization')?.split(' ')[1] || null;
+  if (!token) {
     console.log('No token found');
     return null;
   }
@@ -66,7 +72,7 @@ export const verifyToken = async (
     const secret = new TextEncoder().encode(SECRET_KEY);
 
     const { payload }: { payload: TokenPayload } = await jose.jwtVerify(
-      cookie_token,
+      token,
       secret,
       {
         algorithms: ['HS256'],
@@ -166,7 +172,8 @@ export const verifyRegisterInformation = async (
 };
 export const validateApiKey = (req: NextRequest) => {
   const validApiKey = process.env.API_KEY || '';
-  const apiKey = req.cookies.get('x-api-key')?.value;
+  // const apiKey = req.cookies.get('x-api-key')?.value;
+  const apiKey = req.headers.get('x-api-key');
   // const x_api_key = req.cookies.get('x-api-key')?.value;
   // console.log('X-API-KEY: ', x_api_key);
   console.log('API KEY: ', apiKey);
