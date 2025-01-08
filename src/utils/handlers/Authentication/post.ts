@@ -23,6 +23,7 @@ export const LoginUser = async (req: NextRequest): Promise<Response> => {
   if (hasErrors) {
     return errors;
   }
+  console.log('body', body);
   const search = {
     key: body.username ? 'username' : 'email',
     value: body.username
@@ -41,10 +42,14 @@ export const LoginUser = async (req: NextRequest): Promise<Response> => {
     }
     const isValidPassword = await comparePassword(body.password, user.password);
     if (!isValidPassword) {
+      console.log('erreer');
       return ResponseError.custom.unauthorized(M.INVALID_PASSWORD_OR_USERNAME);
     }
     const token = await generateToken(user);
     const refreshToken = await generateRefreshToken(user);
+    console.log('user', user);
+    console.log('token', token);
+    console.log('refreshToken', refreshToken);
     const userFrontend: UserFrontend = {
       id: user.id,
       username: user.username,
