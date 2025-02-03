@@ -13,11 +13,11 @@ export async function middleware(req: NextRequest) {
     'Content-Type',
     'X-Api-Key',
     'x-api-key',
+    'admin-access',
   ];
   const origin = req.headers.get('origin');
 
   if (origin && !allowedOrigins.includes(origin)) {
-    console.log('CORS Not Allowed:', origin);
     return NextResponse.json({ error: 'CORS Not Allowed' }, { status: 403 });
   }
 
@@ -50,11 +50,13 @@ export async function middleware(req: NextRequest) {
     if (!user) {
       return ResponseError.custom.unauthorized('User not found');
     }
+
     response.headers.set('x-admin' as string, user.admin ? 'true' : 'false');
     response.headers.set('x-user-id' as string, user.id);
   }
   if (req.nextUrl.pathname.startsWith('/api/admin')) {
-    const isAdmin = req.cookies.get('admin')?.value;
+    const isAdmin = req.headers.get('admin-access');
+
     if (isAdmin !== 'true') {
       return ResponseError.custom.unauthorized('Not admin');
     }

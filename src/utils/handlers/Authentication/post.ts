@@ -47,9 +47,6 @@ export const LoginUser = async (req: NextRequest): Promise<Response> => {
     }
     const token = await generateToken(user);
     const refreshToken = await generateRefreshToken(user);
-    console.log('user', user);
-    console.log('token', token);
-    console.log('refreshToken', refreshToken);
     const userFrontend: UserFrontend = {
       id: user.id,
       username: user.username,
