@@ -39,7 +39,8 @@ export async function middleware(req: NextRequest) {
 
   if (
     !req.nextUrl.pathname.startsWith('/api/auth') &&
-    !req.nextUrl.pathname.startsWith('/api/admin')
+    !req.nextUrl.pathname.startsWith('/api/admin') &&
+    !req.nextUrl.pathname.startsWith('/api/search')
   ) {
     const [hasAuthErrors, authErrors, user] =
       await middleware_authenticate_request(req);
